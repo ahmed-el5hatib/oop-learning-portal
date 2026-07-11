@@ -2454,7 +2454,7 @@ function initBugHunter() {
     const feedback = document.getElementById("bugHunterFeedback");
 
     // Reset lines styling
-    const totalLines = window.bugHunterExercise.codeLines.length;
+    const totalLines = window.bugHunterExercise.CodeLines.length;
     for (let i = 0; i < totalLines; i++) {
         const lineRow = document.getElementById(`bugLine-${i}`);
         if (lineRow) {
@@ -2467,7 +2467,7 @@ function initBugHunter() {
         if (completedBadge) completedBadge.classList.remove("d-none");
         
         // Mark correct line
-        const correctLine = document.getElementById(`bugLine-${window.bugHunterExercise.buggyLineIndex}`);
+        const correctLine = document.getElementById(`bugLine-${window.bugHunterExercise.BuggyLineIndex}`);
         if (correctLine) {
             correctLine.classList.add("correct");
         }
@@ -2479,7 +2479,7 @@ function initBugHunter() {
             feedback.style.border = "1px solid rgba(16, 185, 129, 0.3)";
             document.getElementById("bugHunterFeedbackTitle").innerHTML = '<i class="fa-solid fa-medal text-success me-2"></i> Bug Uncovered! +50 XP';
             document.getElementById("bugHunterFeedbackTitle").style.color = "#10b981";
-            document.getElementById("bugHunterFeedbackText").innerHTML = `<strong>Success!</strong> ${window.bugHunterExercise.explanation}`;
+            document.getElementById("bugHunterFeedbackText").innerHTML = `<strong>Success!</strong> ${window.bugHunterExercise.Explanation}`;
             document.getElementById("bugHunterFeedbackText").style.color = "#e2e8f0";
             feedback.classList.remove("d-none");
         }
@@ -2499,7 +2499,7 @@ function clickBugLine(lineIdx) {
     const isCompleted = localStorage.getItem(`section_${activeSectionId}_bughunter_completed`) === "true";
     if (isCompleted) return; // Already resolved, do nothing
 
-    const buggyIdx = window.bugHunterExercise.buggyLineIndex;
+    const buggyIdx = window.bugHunterExercise.BuggyLineIndex;
     const lineRow = document.getElementById(`bugLine-${lineIdx}`);
     const feedback = document.getElementById("bugHunterFeedback");
     const statusText = document.getElementById("bugHunterStatusText");
@@ -2521,7 +2521,7 @@ function clickBugLine(lineIdx) {
             feedback.style.border = "1px solid rgba(16, 185, 129, 0.3)";
             document.getElementById("bugHunterFeedbackTitle").innerHTML = '<i class="fa-solid fa-medal text-success me-2"></i> Bug Uncovered! +50 XP';
             document.getElementById("bugHunterFeedbackTitle").style.color = "#10b981";
-            document.getElementById("bugHunterFeedbackText").innerHTML = `<strong>Success!</strong> ${window.bugHunterExercise.explanation}`;
+            document.getElementById("bugHunterFeedbackText").innerHTML = `<strong>Success!</strong> ${window.bugHunterExercise.Explanation}`;
             document.getElementById("bugHunterFeedbackText").style.color = "#e2e8f0";
             feedback.classList.remove("d-none");
         }
@@ -2582,7 +2582,7 @@ function initCodePuzzle() {
     const snippets = document.querySelectorAll(".draggable-snippet");
     snippets.forEach(s => s.classList.remove("selected"));
 
-    const correctAnswers = window.codePuzzleExercise.correctAnswers;
+    const correctAnswers = window.codePuzzleExercise.CorrectAnswers;
     const totalBlanks = correctAnswers.length;
 
     // Load saved answers or reset
@@ -2620,7 +2620,7 @@ function initCodePuzzle() {
             feedback.style.border = "1px solid rgba(16, 185, 129, 0.3)";
             document.getElementById("codePuzzleFeedbackTitle").innerHTML = '<i class="fa-solid fa-medal text-success me-2"></i> Puzzle Completed! +50 XP';
             document.getElementById("codePuzzleFeedbackTitle").style.color = "#10b981";
-            document.getElementById("codePuzzleFeedbackText").innerHTML = `<strong>Success!</strong> ${window.codePuzzleExercise.explanation}`;
+            document.getElementById("codePuzzleFeedbackText").innerHTML = `<strong>Success!</strong> ${window.codePuzzleExercise.Explanation}`;
             document.getElementById("codePuzzleFeedbackText").style.color = "#e2e8f0";
             feedback.classList.remove("d-none");
         }
@@ -2662,7 +2662,7 @@ function clickPuzzleBlank(blankIdx) {
     if (isCompleted) return;
 
     // Reset other blanks active state
-    const correctAnswers = window.codePuzzleExercise.correctAnswers;
+    const correctAnswers = window.codePuzzleExercise.CorrectAnswers;
     for (let i = 0; i < correctAnswers.length; i++) {
         const b = document.getElementById(`puzzleBlank-${i}`);
         if (b) b.classList.remove("active");
@@ -2733,7 +2733,7 @@ function checkCodePuzzle() {
     const isCompleted = localStorage.getItem(`section_${activeSectionId}_codepuzzle_completed`) === "true";
     if (isCompleted) return;
 
-    const correctAnswers = window.codePuzzleExercise.correctAnswers;
+    const correctAnswers = window.codePuzzleExercise.CorrectAnswers;
     const totalBlanks = correctAnswers.length;
     const feedback = document.getElementById("codePuzzleFeedback");
     const completedBadge = document.getElementById("codePuzzleCompletedBadge");
@@ -2785,7 +2785,7 @@ function checkCodePuzzle() {
             feedback.style.border = "1px solid rgba(16, 185, 129, 0.3)";
             document.getElementById("codePuzzleFeedbackTitle").innerHTML = '<i class="fa-solid fa-medal text-success me-2"></i> Puzzle Completed! +50 XP';
             document.getElementById("codePuzzleFeedbackTitle").style.color = "#10b981";
-            document.getElementById("codePuzzleFeedbackText").innerHTML = `<strong>Success!</strong> ${window.codePuzzleExercise.explanation}`;
+            document.getElementById("codePuzzleFeedbackText").innerHTML = `<strong>Success!</strong> ${window.codePuzzleExercise.Explanation}`;
             document.getElementById("codePuzzleFeedbackText").style.color = "#e2e8f0";
             feedback.classList.remove("d-none");
         }
@@ -2816,6 +2816,3 @@ function resetCodePuzzle() {
     updateSectionProgress();
     updateDashboardStats();
 }
-
-
-
