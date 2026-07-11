@@ -17,6 +17,7 @@
     var dragDropExercise = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DragDrop));
     var predictOutputExercises = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PredictOutputs));
     var bugHunterExercise = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BugHunter));
+    var codePuzzleExercise = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CodePuzzle));
 </script>
 
 <div class="container-fluid mt-4 px-lg-5 text-start">
@@ -123,6 +124,14 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="bughunter-tab" data-bs-toggle="tab" data-bs-target="#bughunter" type="button" role="tab" onclick="initBugHunter()">
                             <i class="fa-solid fa-bug me-1"></i> Bug Hunter
+                        </button>
+                    </li>
+                }
+                @if (Model.CodePuzzle != null)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="codepuzzle-tab" data-bs-toggle="tab" data-bs-target="#codepuzzle" type="button" role="tab" onclick="initCodePuzzle()">
+                            <i class="fa-solid fa-puzzle-piece me-1"></i> Code Puzzle
                         </button>
                     </li>
                 }
@@ -641,6 +650,88 @@
                     </div>
                 }
             </div>
+            
+            <!-- 9. Code Puzzle Tab -->
+            @if (Model.CodePuzzle != null)
+            {
+                <div class="tab-pane fade" id="codepuzzle" role="tabpanel">
+                    <div class="codepuzzle-container text-start p-2 p-md-3">
+                        
+                        <!-- Header -->
+                        <div class="alert alert-cyan-glow mb-4">
+                            <h4 class="Cairo-bold text-cyan">
+                                <i class="fa-solid fa-puzzle-piece me-2"></i> Code Puzzle: @Model.CodePuzzle.Title
+                            </h4>
+                            <p class="mb-0 mt-2 font-outfit text-light">@Model.CodePuzzle.Description</p>
+                        </div>
+
+                        <!-- Mobile Friendly Click-to-Fill Help Hint -->
+                        <div class="mb-3 d-flex align-items-center gap-2 text-warning font-outfit" style="font-size:0.85rem;">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span><strong>How to play:</strong> Drag-and-drop snippets on desktop, or simply <strong>tap a blank slot then tap a snippet</strong> to fill it!</span>
+                        </div>
+
+                        <!-- Puzzle Code Display Area -->
+                        <div class="puzzle-code-wrapper p-4 font-mono mb-4" style="border-radius:10px; border:1px solid rgba(0,242,254,0.25); background:#0c0f16; line-height:2.0; font-size:1.0rem; overflow-x:auto;">
+                            @{
+                                var puzzleCodeHtml = Model.CodePuzzle.PuzzleCode;
+                                puzzleCodeHtml = System.Net.WebUtility.HtmlEncode(puzzleCodeHtml);
+                                
+                                for (int i = 0; i < Model.CodePuzzle.CorrectAnswers.Count; i++)
+                                {
+                                    var replacement = $"<span class=\"puzzle-blank\" id=\"puzzleBlank-{i}\" data-index=\"{i}\" ondragover=\"allowDrop(event)\" ondrop=\"dropSnippet(event, {i})\" onclick=\"clickPuzzleBlank({i})\">?</span>";
+                                    puzzleCodeHtml = puzzleCodeHtml.Replace("{" + i + "}", replacement);
+                                }
+                            }
+                            <pre style="margin:0; white-space:pre-wrap; word-break:break-word; color:#e2e8f0;">@Html.Raw(puzzleCodeHtml)</pre>
+                        </div>
+
+                        <!-- Draggable/Clickable Option Snippets -->
+                        <div class="mb-4">
+                            <label class="Cairo-bold text-light mb-2 d-block">
+                                <i class="fa-solid fa-list-check text-cyan me-1"></i> Drag or Select Snippets:
+                            </label>
+                            <div class="d-flex flex-wrap gap-2 p-3" style="background:#141824; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                                @for (int sIdx = 0; sIdx < Model.CodePuzzle.Draggables.Count; sIdx++)
+                                {
+                                    var option = Model.CodePuzzle.Draggables[sIdx];
+                                    <div class="draggable-snippet px-3 py-2 font-mono" 
+                                         id="puzzleSnippet-@sIdx"
+                                         draggable="true" 
+                                         ondragstart="dragSnippet(event, '@option', @sIdx)"
+                                         onclick="clickPuzzleSnippet('@option', @sIdx)"
+                                         style="cursor: grab; background:#242b3d; border:1px solid rgba(0,242,254,0.2); border-radius:6px; color:#e2e8f0; font-size:0.9rem; user-select:none; transition:all 0.2s ease;">
+                                        @option
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Explanation Feedback Card -->
+                        <div id="codePuzzleFeedback" class="d-none alert p-4 mb-4" style="border-radius:12px; transition: all 0.3s ease;">
+                            <h5 class="Cairo-bold mb-2" id="codePuzzleFeedbackTitle">Result</h5>
+                            <p class="mb-0 font-outfit" id="codePuzzleFeedbackText"></p>
+                        </div>
+
+                        <!-- Action Controls -->
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 border-top border-secondary-subtle pt-4 mt-4">
+                            <div class="d-flex gap-3 align-items-center">
+                                <button class="btn btn-cyan Cairo-bold px-5" onclick="checkCodePuzzle()">
+                                    <i class="fa-solid fa-check-circle me-1"></i> Verify Puzzle
+                                </button>
+                                <button class="btn btn-outline-secondary Cairo-bold px-4" onclick="resetCodePuzzle()">
+                                    <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                                </button>
+                            </div>
+                            <span class="badge bg-success text-dark p-2 fs-6 d-none" id="codePuzzleCompletedBadge">
+                                <i class="fa-solid fa-medal"></i> Puzzle Completed! +50 XP
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+            }
         </div>
+    </div>
     </div>
 </div>

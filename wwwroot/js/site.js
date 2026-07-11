@@ -381,6 +381,14 @@ function resetQuiz() {
 function initSectionProgress() {
     if (!activeSectionId) return;
 
+    // Initialize Bug Hunter and Code Puzzle if present
+    if (window.bugHunterExercise) {
+        initBugHunter();
+    }
+    if (window.codePuzzleExercise) {
+        initCodePuzzle();
+    }
+
     // Check challenge completion
     const isChallengeDone = localStorage.getItem(`section_${activeSectionId}_challenge_completed`) === "true";
     if (isChallengeDone) {
@@ -439,36 +447,44 @@ function updateSectionProgress() {
     const hasBugHunter = window.bugHunterExercise != null;
     const bugHunterDone = localStorage.getItem(`section_${activeSectionId}_bughunter_completed`) === "true";
 
-    // Weighted scoring: distributes to 100
-    if (hasPredicts && hasBugHunter) {
-        // Lab=15, Challenge=25, Quiz=20, DragDrop=15, Predict=15, BugHunter=10
-        if (labDone) progress += 15;
-        if (challengeDone) progress += 25;
-        if (quizDone) progress += Math.round((quizScoreVal / 100) * 20);
-        if (dragDropDone) progress += 15;
-        if (allPredictsDone) progress += 15;
-        if (bugHunterDone) progress += 10;
-    } else if (hasPredicts && !hasBugHunter) {
-        // Lab=20, Challenge=25, Quiz=25, DragDrop=15, Predict=15
-        if (labDone) progress += 20;
-        if (challengeDone) progress += 25;
-        if (quizDone) progress += Math.round((quizScoreVal / 100) * 25);
-        if (dragDropDone) progress += 15;
-        if (allPredictsDone) progress += 15;
-    } else if (!hasPredicts && hasBugHunter) {
-        // Lab=20, Challenge=25, Quiz=25, DragDrop=20, BugHunter=10
-        if (labDone) progress += 20;
-        if (challengeDone) progress += 25;
-        if (quizDone) progress += Math.round((quizScoreVal / 100) * 25);
-        if (dragDropDone) progress += 20;
-        if (bugHunterDone) progress += 10;
-    } else {
-        // Original weights: Lab=25, Challenge=30, Quiz=25, DragDrop=20
-        if (labDone) progress += 25;
-        if (challengeDone) progress += 30;
-        if (quizDone) progress += Math.round((quizScoreVal / 100) * 25);
-        if (dragDropDone) progress += 20;
+    // Check code puzzle completion
+    const hasCodePuzzle = window.codePuzzleExercise != null;
+    const codePuzzleDone = localStorage.getItem(`section_${activeSectionId}_codepuzzle_completed`) === "true";
+
+    // Dynamic Weights distribution (sums to 100 for all paths)
+    let weights = {
+        lab: 25,
+        challenge: 30,
+        quiz: 25,
+        dragDrop: 20,
+        predict: 0,
+        bugHunter: 0,
+        codePuzzle: 0
+    };
+
+    if (hasPredicts && hasBugHunter && hasCodePuzzle) {
+        weights = { lab: 15, challenge: 20, quiz: 20, dragDrop: 15, predict: 10, bugHunter: 10, codePuzzle: 10 };
+    } else if (hasPredicts && hasBugHunter && !hasCodePuzzle) {
+        weights = { lab: 15, challenge: 25, quiz: 20, dragDrop: 15, predict: 15, bugHunter: 10, codePuzzle: 0 };
+    } else if (hasPredicts && !hasBugHunter && hasCodePuzzle) {
+        weights = { lab: 15, challenge: 25, quiz: 20, dragDrop: 15, predict: 15, bugHunter: 0, codePuzzle: 10 };
+    } else if (hasPredicts && !hasBugHunter && !hasCodePuzzle) {
+        weights = { lab: 20, challenge: 25, quiz: 25, dragDrop: 15, predict: 15, bugHunter: 0, codePuzzle: 0 };
+    } else if (!hasPredicts && hasBugHunter && hasCodePuzzle) {
+        weights = { lab: 20, challenge: 25, quiz: 20, dragDrop: 15, predict: 0, bugHunter: 10, codePuzzle: 10 };
+    } else if (!hasPredicts && hasBugHunter && !hasCodePuzzle) {
+        weights = { lab: 20, challenge: 25, quiz: 25, dragDrop: 20, predict: 0, bugHunter: 10, codePuzzle: 0 };
+    } else if (!hasPredicts && !hasBugHunter && hasCodePuzzle) {
+        weights = { lab: 20, challenge: 25, quiz: 25, dragDrop: 20, predict: 0, bugHunter: 0, codePuzzle: 10 };
     }
+
+    if (labDone) progress += weights.lab;
+    if (challengeDone) progress += weights.challenge;
+    if (quizDone) progress += Math.round((quizScoreVal / 100) * weights.quiz);
+    if (dragDropDone) progress += weights.dragDrop;
+    if (allPredictsDone) progress += weights.predict;
+    if (bugHunterDone) progress += weights.bugHunter;
+    if (codePuzzleDone) progress += weights.codePuzzle;
 
     document.getElementById("sectionProgressVal").innerText = `${progress}%`;
 
@@ -530,6 +546,10 @@ function updateDashboardStats() {
         }
         // Bug Hunter exercise (+50 XP if completed)
         if (localStorage.getItem(`section_${i}_bughunter_completed`) === "true") {
+            totalXp += 50;
+        }
+        // Code Puzzle exercise (+50 XP if completed)
+        if (localStorage.getItem(`section_${i}_codepuzzle_completed`) === "true") {
             totalXp += 50;
         }
 
@@ -2538,5 +2558,264 @@ function resetBugHunter() {
     updateSectionProgress();
     updateDashboardStats();
 }
+
+
+// ==========================================
+// Code Puzzle (Fill-in-the-Blanks) Handlers
+// ==========================================
+window.codePuzzleFills = {};
+window.activePuzzleBlankIndex = null;
+window.activePuzzleSnippetValue = null;
+
+function initCodePuzzle() {
+    if (!activeSectionId || !window.codePuzzleExercise) return;
+
+    const isCompleted = localStorage.getItem(`section_${activeSectionId}_codepuzzle_completed`) === "true";
+    const feedback = document.getElementById("codePuzzleFeedback");
+    const completedBadge = document.getElementById("codePuzzleCompletedBadge");
+    
+    window.codePuzzleFills = {};
+    window.activePuzzleBlankIndex = null;
+    window.activePuzzleSnippetValue = null;
+
+    // Reset snippets styling
+    const snippets = document.querySelectorAll(".draggable-snippet");
+    snippets.forEach(s => s.classList.remove("selected"));
+
+    const correctAnswers = window.codePuzzleExercise.correctAnswers;
+    const totalBlanks = correctAnswers.length;
+
+    // Load saved answers or reset
+    let savedFills = null;
+    try {
+        const savedStr = localStorage.getItem(`section_${activeSectionId}_codepuzzle_fills`);
+        if (savedStr) savedFills = JSON.parse(savedStr);
+    } catch (e) {
+        console.error("Failed to parse saved puzzle fills", e);
+    }
+
+    for (let i = 0; i < totalBlanks; i++) {
+        const blank = document.getElementById(`puzzleBlank-${i}`);
+        if (blank) {
+            blank.classList.remove("active", "filled", "correct", "incorrect");
+            if (isCompleted) {
+                const answer = correctAnswers[i];
+                blank.textContent = answer;
+                blank.classList.add("correct", "filled");
+            } else if (savedFills && savedFills[i]) {
+                blank.textContent = savedFills[i];
+                blank.classList.add("filled");
+                window.codePuzzleFills[i] = savedFills[i];
+            } else {
+                blank.textContent = "?";
+            }
+        }
+    }
+
+    if (isCompleted) {
+        if (completedBadge) completedBadge.classList.remove("d-none");
+        if (feedback) {
+            feedback.className = "alert p-4 mb-4 alert-success";
+            feedback.style.background = "rgba(16, 185, 129, 0.1)";
+            feedback.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+            document.getElementById("codePuzzleFeedbackTitle").innerHTML = '<i class="fa-solid fa-medal text-success me-2"></i> Puzzle Completed! +50 XP';
+            document.getElementById("codePuzzleFeedbackTitle").style.color = "#10b981";
+            document.getElementById("codePuzzleFeedbackText").innerHTML = `<strong>Success!</strong> ${window.codePuzzleExercise.explanation}`;
+            document.getElementById("codePuzzleFeedbackText").style.color = "#e2e8f0";
+            feedback.classList.remove("d-none");
+        }
+    } else {
+        if (completedBadge) completedBadge.classList.add("d-none");
+        if (feedback) {
+            feedback.classList.add("d-none");
+            feedback.innerHTML = '<h5 class="Cairo-bold mb-2" id="codePuzzleFeedbackTitle">Result</h5><p class="mb-0 font-outfit" id="codePuzzleFeedbackText"></p>';
+        }
+    }
+}
+
+// HTML5 Drag and Drop events
+function dragSnippet(ev, snippetVal, sIdx) {
+    if (localStorage.getItem(`section_${activeSectionId}_codepuzzle_completed`) === "true") {
+        ev.preventDefault();
+        return;
+    }
+    ev.dataTransfer.setData("text/plain", snippetVal);
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function dropSnippet(ev, blankIdx) {
+    ev.preventDefault();
+    if (localStorage.getItem(`section_${activeSectionId}_codepuzzle_completed`) === "true") return;
+
+    const val = ev.dataTransfer.getData("text/plain");
+    if (val) {
+        fillPuzzleBlank(blankIdx, val);
+    }
+}
+
+// Click to Fill (Mobile & alternate Desktop accessibility)
+function clickPuzzleBlank(blankIdx) {
+    const isCompleted = localStorage.getItem(`section_${activeSectionId}_codepuzzle_completed`) === "true";
+    if (isCompleted) return;
+
+    // Reset other blanks active state
+    const correctAnswers = window.codePuzzleExercise.correctAnswers;
+    for (let i = 0; i < correctAnswers.length; i++) {
+        const b = document.getElementById(`puzzleBlank-${i}`);
+        if (b) b.classList.remove("active");
+    }
+
+    const clickedBlank = document.getElementById(`puzzleBlank-${blankIdx}`);
+
+    if (window.activePuzzleSnippetValue !== null) {
+        // We already have a snippet selected, fill it!
+        fillPuzzleBlank(blankIdx, window.activePuzzleSnippetValue);
+        
+        // Reset selection state
+        window.activePuzzleSnippetValue = null;
+        window.activePuzzleBlankIndex = null;
+        const snippets = document.querySelectorAll(".draggable-snippet");
+        snippets.forEach(s => s.classList.remove("selected"));
+    } else {
+        // Highlight this blank as active
+        if (clickedBlank) clickedBlank.classList.add("active");
+        window.activePuzzleBlankIndex = blankIdx;
+    }
+}
+
+function clickPuzzleSnippet(val, snippetIdx) {
+    const isCompleted = localStorage.getItem(`section_${activeSectionId}_codepuzzle_completed`) === "true";
+    if (isCompleted) return;
+
+    const snippetEl = document.getElementById(`puzzleSnippet-${snippetIdx}`);
+
+    if (window.activePuzzleBlankIndex !== null) {
+        // We have an active blank, fill it immediately!
+        fillPuzzleBlank(window.activePuzzleBlankIndex, val);
+
+        // Remove active class from blank
+        const activeBlank = document.getElementById(`puzzleBlank-${window.activePuzzleBlankIndex}`);
+        if (activeBlank) activeBlank.classList.remove("active");
+
+        // Reset state
+        window.activePuzzleBlankIndex = null;
+        window.activePuzzleSnippetValue = null;
+    } else {
+        // Highlight snippet as selected
+        const snippets = document.querySelectorAll(".draggable-snippet");
+        snippets.forEach(s => s.classList.remove("selected"));
+
+        if (snippetEl) snippetEl.classList.add("selected");
+        window.activePuzzleSnippetValue = val;
+    }
+}
+
+function fillPuzzleBlank(blankIdx, val) {
+    window.codePuzzleFills[blankIdx] = val;
+    
+    const blank = document.getElementById(`puzzleBlank-${blankIdx}`);
+    if (blank) {
+        blank.textContent = val;
+        blank.classList.add("filled");
+        blank.classList.remove("active", "incorrect", "correct");
+    }
+
+    // Save state
+    localStorage.setItem(`section_${activeSectionId}_codepuzzle_fills`, JSON.stringify(window.codePuzzleFills));
+}
+
+function checkCodePuzzle() {
+    if (!activeSectionId || !window.codePuzzleExercise) return;
+
+    const isCompleted = localStorage.getItem(`section_${activeSectionId}_codepuzzle_completed`) === "true";
+    if (isCompleted) return;
+
+    const correctAnswers = window.codePuzzleExercise.correctAnswers;
+    const totalBlanks = correctAnswers.length;
+    const feedback = document.getElementById("codePuzzleFeedback");
+    const completedBadge = document.getElementById("codePuzzleCompletedBadge");
+
+    // Check if all are filled
+    const filledCount = Object.keys(window.codePuzzleFills).length;
+    if (filledCount < totalBlanks) {
+        if (feedback) {
+            feedback.className = "alert p-4 mb-4 alert-warning";
+            feedback.style.background = "rgba(251, 191, 36, 0.08)";
+            feedback.style.border = "1px solid rgba(251, 191, 36, 0.3)";
+            document.getElementById("codePuzzleFeedbackTitle").innerHTML = '<i class="fa-solid fa-circle-exclamation text-warning me-2"></i> Incomplete Puzzle';
+            document.getElementById("codePuzzleFeedbackTitle").style.color = "#fbbf24";
+            document.getElementById("codePuzzleFeedbackText").textContent = "Please place a snippet in every blank space before verifying!";
+            document.getElementById("codePuzzleFeedbackText").style.color = "#fef3c7";
+            feedback.classList.remove("d-none");
+        }
+        return;
+    }
+
+    let allCorrect = true;
+    for (let i = 0; i < totalBlanks; i++) {
+        const blank = document.getElementById(`puzzleBlank-${i}`);
+        const userVal = window.codePuzzleFills[i];
+        const correctVal = correctAnswers[i];
+
+        if (blank) {
+            if (userVal === correctVal) {
+                blank.classList.remove("incorrect");
+                blank.classList.add("correct");
+            } else {
+                allCorrect = false;
+                blank.classList.remove("correct");
+                // Trigger reflow to restart shake animation
+                blank.classList.remove("incorrect");
+                void blank.offsetWidth;
+                blank.classList.add("incorrect");
+            }
+        }
+    }
+
+    if (allCorrect) {
+        localStorage.setItem(`section_${activeSectionId}_codepuzzle_completed`, "true");
+        if (completedBadge) completedBadge.classList.remove("d-none");
+
+        if (feedback) {
+            feedback.className = "alert p-4 mb-4 alert-success";
+            feedback.style.background = "rgba(16, 185, 129, 0.1)";
+            feedback.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+            document.getElementById("codePuzzleFeedbackTitle").innerHTML = '<i class="fa-solid fa-medal text-success me-2"></i> Puzzle Completed! +50 XP';
+            document.getElementById("codePuzzleFeedbackTitle").style.color = "#10b981";
+            document.getElementById("codePuzzleFeedbackText").innerHTML = `<strong>Success!</strong> ${window.codePuzzleExercise.explanation}`;
+            document.getElementById("codePuzzleFeedbackText").style.color = "#e2e8f0";
+            feedback.classList.remove("d-none");
+        }
+
+        // Update progress & stats in real-time
+        updateSectionProgress();
+        updateDashboardStats();
+    } else {
+        if (feedback) {
+            feedback.className = "alert p-4 mb-4 alert-danger";
+            feedback.style.background = "rgba(239, 68, 68, 0.08)";
+            feedback.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+            document.getElementById("codePuzzleFeedbackTitle").innerHTML = '<i class="fa-solid fa-circle-xmark text-danger me-2"></i> Check Your Reasoning';
+            document.getElementById("codePuzzleFeedbackTitle").style.color = "#ef4444";
+            document.getElementById("codePuzzleFeedbackText").textContent = "Not all blanks are filled with the correct C# code snippets. Review your C# syntax rules and try again!";
+            document.getElementById("codePuzzleFeedbackText").style.color = "#fca5a5";
+            feedback.classList.remove("d-none");
+        }
+    }
+}
+
+function resetCodePuzzle() {
+    if (!activeSectionId) return;
+
+    localStorage.removeItem(`section_${activeSectionId}_codepuzzle_completed`);
+    localStorage.removeItem(`section_${activeSectionId}_codepuzzle_fills`);
+    initCodePuzzle();
+    updateSectionProgress();
+    updateDashboardStats();
+}
+
 
 

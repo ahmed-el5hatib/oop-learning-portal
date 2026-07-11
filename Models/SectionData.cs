@@ -19,6 +19,7 @@ namespace OopLearningPortal.Models
         public DragDropExercise DragDrop { get; set; } = new();
         public List<PredictOutputExercise> PredictOutputs { get; set; } = [];
         public SpotBugExercise? BugHunter { get; set; }
+        public CodePuzzleExercise? CodePuzzle { get; set; }
     }
 
     public class CodeLab
@@ -51,6 +52,19 @@ namespace OopLearningPortal.Models
         public string Description { get; set; } = string.Empty;
         public List<string> CodeLines { get; set; } = [];
         public int BuggyLineIndex { get; set; } // 0-based index of the buggy line
+        public string Explanation { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// A "Drag & Drop Code Puzzle" exercise: student fills code blanks with options.
+    /// </summary>
+    public class CodePuzzleExercise
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string PuzzleCode { get; set; } = string.Empty; // Contains placeholders like {0}, {1}
+        public List<string> Draggables { get; set; } = []; // Draggable/clickable options
+        public List<string> CorrectAnswers { get; set; } = []; // Answer corresponding to placeholders
         public string Explanation { get; set; } = string.Empty;
     }
 
@@ -292,6 +306,27 @@ class Program {
                         ],
                         BuggyLineIndex = 3,
                         Explanation = "Line 4 contains the error: 'x = x * 3;'. In C#, an 'out' parameter is considered unassigned upon method entry. Therefore, you cannot read its value (e.g., using it in 'x * 3' on the right-hand side) before assigning it a value first. You must write e.g., 'x = 3;' first, then you can read from it."
+                    },
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "Ref and Out Parameter Passing Puzzle",
+                        Description = "Drag or click the appropriate keywords to complete this C# program that multiplies a value by 2 and returns it via an out parameter, and increments the original variable by 5.",
+                        PuzzleCode = @"using System;
+class Program {
+    static void Update({0} int a, {1} int b) {
+        b = a * 2;
+        a = a + 5;
+    }
+    static void Main() {
+        int x = 10;
+        int y;
+        Update({2} x, {3} y);
+        Console.WriteLine(x + "", "" + y);
+    }
+}",
+                        Draggables = ["ref", "out", "in", "val"],
+                        CorrectAnswers = ["ref", "out", "ref", "out"],
+                        Explanation = "To pass a variable by reference in C# so that modifications inside the method update the caller's variable, use 'ref'. To pass a variable that must be initialized within the method, use 'out'. Both the method declaration and the invocation must specify these keywords."
                     }
                 },
 
@@ -502,7 +537,25 @@ class Program {
 }",
                             ExpectedOutput = "Autumn\r\n2"
                         }
-                    ]
+                    ],
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "Enum and Struct Declaration Puzzle",
+                        Description = "Complete this C# code by dragging or clicking the correct keywords to declare an enum, a struct, and initialize struct fields using the 'this' keyword.",
+                        PuzzleCode = @"using System;
+{0} Status { Active, Inactive }
+{1} Book {
+    public string title;
+    public Status status;
+    public Book(string t, Status s) {
+        {2}.title = t;
+        {3}.status = s;
+    }
+}",
+                        Draggables = ["enum", "struct", "class", "this", "base"],
+                        CorrectAnswers = ["enum", "struct", "this", "this"],
+                        Explanation = "An 'enum' declares a set of named integer constants. A 'struct' is a value type encapsulated data structure. Inside constructors, 'this' refers to the current instance of the struct."
+                    }
                 },
 
                 // =====================================================
@@ -769,6 +822,21 @@ class Program {
                         ],
                         BuggyLineIndex = 8,
                         Explanation = "Line 9 contains the error: 's.name = \"Ahmed\";'. The field 'name' in class 'Student' is marked as 'private', meaning it can only be accessed or modified from inside the 'Student' class. Accessing it directly from 'Program.Main' is a compilation error."
+                    },
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "Encapsulation and Class Constructor Puzzle",
+                        Description = "Complete this class declaration by inserting the correct access modifiers ('private', 'public') and backing fields to implement clean encapsulation.",
+                        PuzzleCode = @"class Person {
+    {0} string name;
+    {1} Person(string n) {
+        this.name = n;
+    }
+    public string Name => {2};
+}",
+                        Draggables = ["private", "public", "name", "Name", "this"],
+                        CorrectAnswers = ["private", "public", "name"],
+                        Explanation = "To protect internal state, fields are declared as 'private'. Constructors and getters (like Name property) are declared as 'public' to provide external access. The getter returns the private backing field 'name'."
                     }
                 },
 
@@ -995,7 +1063,24 @@ class Program {
 }",
                             ExpectedOutput = "Remaining Balance: 400"
                         }
-                    ]
+                    ],
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "UML to C# Visibility Mapping Puzzle",
+                        Description = "Analyze the UML class specifications and complete the C# class using the correct private/public access modifiers.",
+                        PuzzleCode = @"class Account {
+    // UML specifications:
+    // - balance : double
+    {0} double balance;
+
+    // UML specifications:
+    // + GetBalance() : double
+    {1} double GetBalance() => balance;
+}",
+                        Draggables = ["private", "public", "protected", "internal"],
+                        CorrectAnswers = ["private", "public"],
+                        Explanation = "In UML diagrams, the '-' symbol represents a 'private' member (accessible only within the class), while the '+' symbol represents a 'public' member (accessible externally)."
+                    }
                 },
 
                 // =====================================================
@@ -1248,6 +1333,21 @@ class Program {
                         ],
                         BuggyLineIndex = 5,
                         Explanation = "Line 6 contains the bug: 'return Name;'. In C#, returning 'Name' (with a capital N) inside the 'Name' property getter will call the getter method again, leading to an infinite recursion that crashes the application with a StackOverflowException. It must be written as 'return name;' (using the lowercase private backing field)."
+                    },
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "C# Property Validation Puzzle",
+                        Description = "Drag or click the correct variables and keywords to complete the Square class property validation.",
+                        PuzzleCode = @"class Square {
+    private double {0};
+    public double Side {
+        get { return {1}; }
+        set { if ({2} > 0) {3} = value; }
+    }
+}",
+                        Draggables = ["side", "Side", "value", "val"],
+                        CorrectAnswers = ["side", "side", "value", "side"],
+                        Explanation = "A property getter returns the private backing field ('side'). Inside the setter, the incoming value is referenced by the special keyword 'value' and, if valid, is stored in the backing field."
                     }
                 },
 
@@ -1410,6 +1510,63 @@ class Program
                             new DragDropPair { Id = "dd-6-3", Term = "single inheritance", Description = "A design restriction in C# where a class can have only one direct parent class." },
                             new DragDropPair { Id = "dd-6-4", Term = "derived class", Description = "A subclass that inherits state and behavior properties from a base class." }
                         ]
+                    },
+                    PredictOutputs = [
+                        new PredictOutputExercise
+                        {
+                            Id = 1,
+                            Title = "Constructor Execution Order",
+                            Hint = "When creating a derived class, the base constructor always executes first.",
+                            Code = @"using System;
+class Base {
+    public Base() { Console.WriteLine(""Base Constructor""); }
+}
+class Derived : Base {
+    public Derived() { Console.WriteLine(""Derived Constructor""); }
+}
+class Program {
+    static void Main() {
+        new Derived();
+    }
+}",
+                            ExpectedOutput = "Base Constructor\r\nDerived Constructor"
+                        },
+                        new PredictOutputExercise
+                        {
+                            Id = 2,
+                            Title = "Accessing Base Variables",
+                            Hint = "base.val accesses the protected member in Parent, while this.val accesses the private member in Child.",
+                            Code = @"using System;
+class Parent {
+    protected int val = 10;
+}
+class Child : Parent {
+    private int val = 20;
+    public void Print() {
+        Console.WriteLine(base.val + "", "" + this.val);
+    }
+}
+class Program {
+    static void Main() {
+        new Child().Print();
+    }
+}",
+                            ExpectedOutput = "10, 20"
+                        }
+                    ],
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "Inheritance Constructor Chaining Puzzle",
+                        Description = "Complete the derived class 'Dog' constructor to inherit from 'Animal' and chain the parameters properly.",
+                        PuzzleCode = @"class Animal {
+    public Animal(string name) {}
+}
+class Dog {0} Animal {
+    public Dog(string name) {1} {2}(name) {}
+}",
+                        Draggables = [":", "base", "this", "parent"],
+                        CorrectAnswers = [":", ":", "base"],
+                        Explanation = "In C#, we inherit classes using the ':' operator. To chain constructors, we write ': base(arguments)' immediately following the subclass constructor signature."
                     }
                 },
 
@@ -1664,6 +1821,20 @@ class Program {
                         ],
                         BuggyLineIndex = 5,
                         Explanation = "Line 6 contains the error: 'public override void Print()'. You cannot override the 'Print' method because it is not marked as 'virtual' or 'abstract' in the base class 'Employee'. To fix this, you must add 'virtual' to the base method declaration: 'public virtual void Print()'."
+                    },
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "Virtual and Override Payroll Puzzle",
+                        Description = "Complete this derived class salary calculation implementation by placing virtual, override, and base calls appropriately.",
+                        PuzzleCode = @"class Employee {
+    public {0} double CalculateSalary() => 1000;
+}
+class Manager : Employee {
+    public {1} double CalculateSalary() => {2}.CalculateSalary() + 500;
+}",
+                        Draggables = ["virtual", "override", "base", "this", "abstract"],
+                        CorrectAnswers = ["virtual", "override", "base"],
+                        Explanation = "In C#, we mark a base class method as 'virtual' to allow subclasses to replace its behavior. The subclass declares the replacement method with the 'override' keyword, and can invoke the base version using the 'base' keyword."
                     }
                 },
 
@@ -1866,7 +2037,21 @@ class Program {
 }",
                             ExpectedOutput = "20\r\n150"
                         }
-                    ]
+                    ],
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "Abstract Class Shape Puzzle",
+                        Description = "Complete this polymorphic class design by marking the base class and base methods as abstract, and the derived method implementation as overridden.",
+                        PuzzleCode = @"{0} class Shape {
+    public {1} double GetArea();
+}
+class Circle : Shape {
+    public {2} double GetArea() => 3.14;
+}",
+                        Draggables = ["abstract", "override", "virtual", "interface"],
+                        CorrectAnswers = ["abstract", "abstract", "override"],
+                        Explanation = "An 'abstract' class cannot be instantiated and can contain declarations of 'abstract' methods. Subclasses must override abstract methods using the 'override' keyword to provide a concrete implementation."
+                    }
                 },
 
                 // =====================================================
@@ -2074,7 +2259,21 @@ class Program {
 }",
                             ExpectedOutput = "42\r\n3.14"
                         }
-                    ]
+                    ],
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "Generic Class Type Parameter Puzzle",
+                        Description = "Complete this generic class definition by specifying the type parameters in class and method signatures.",
+                        PuzzleCode = @"class Box{0} {
+    private {1} content;
+    public Box({2} item) {
+        content = item;
+    }
+}",
+                        Draggables = ["<T>", "T", "object", "dynamic"],
+                        CorrectAnswers = ["<T>", "T", "T"],
+                        Explanation = "Generics introduce type parameterization. The class definition takes '<T>', and the fields, properties, and parameters reference 'T' as the placeholder for the type to be supplied at instantiation."
+                    }
                 },
 
                 // =====================================================
@@ -2256,7 +2455,25 @@ class Program {
 }",
                             ExpectedOutput = "Invalid format!"
                         }
-                    ]
+                    ],
+                    CodePuzzle = new CodePuzzleExercise
+                    {
+                        Title = "Exception Control Flow Puzzle",
+                        Description = "Complete this exception handling structure by placing the try, catch, and finally blocks in their correct sequence.",
+                        PuzzleCode = @"{0} {
+    int x = 0;
+    int y = 5 / x;
+}
+{1} (DivideByZeroException ex) {
+    Console.WriteLine(ex.Message);
+}
+{2} {
+    Console.WriteLine(""Cleanup Complete"");
+}",
+                        Draggables = ["try", "catch", "finally", "throw", "using"],
+                        CorrectAnswers = ["try", "catch", "finally"],
+                        Explanation = "An exception block starts with 'try' (which hosts buggy code), followed by one or more 'catch' blocks (to intercept specific exception types), and optionally ends with a 'finally' block (which executes unconditionally for resource cleanup)."
+                    }
                 }
             ];
         }
