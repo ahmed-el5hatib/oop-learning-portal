@@ -1,0 +1,6 @@
+root = true
+
+[*.cs]
+# Disable IDE suggestions for collection and new expression simplifications in seed data
+dotnet_diagnostic.IDE0028.severity = none
+dotnet_diagnostic.IDE0090.severity = none

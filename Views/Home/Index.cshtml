@@ -1,0 +1,146 @@
+@model IEnumerable<OopLearningPortal.Models.Section>
+@{
+    ViewData["Title"] = "OOP Learning Portal";
+}
+
+<div class="container mt-4">
+    <!-- Hero Banner Card -->
+    <div class="hero-card mb-5">
+        <div class="hero-overlay"></div>
+        <div class="hero-content text-center text-lg-start d-lg-flex justify-content-between align-items-center">
+            <div class="hero-text">
+                <span class="badge bg-cyan text-dark-theme mb-2">Luxor University - Faculty of Computers & Information</span>
+                <h1 class="Cairo-bold display-5 mt-1 text-light">Object-Oriented Design & Programming using C#</h1>
+                <p class="lead mt-3 text-cyan-light font-outfit">An interactive learning portal for C# Object-Oriented Programming (OOP) sections.</p>
+                <div class="instructor-badge mt-4">
+                    <i class="fa-solid fa-chalkboard-user text-cyan me-2"></i>
+                    <span>Prepared by Eng. <strong>Ahmed El-khatib</strong></span>
+                </div>
+            </div>
+            <div class="hero-visual mt-4 mt-lg-0">
+                <div class="floating-cube">
+                    <div class="cube-face front">OOP</div>
+                    <div class="cube-face back">C#</div>
+                    <div class="cube-face right">CLASS</div>
+                    <div class="cube-face left">OBJECT</div>
+                    <div class="cube-face top">UML</div>
+                    <div class="cube-face bottom">API</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Progress / Stats Dashboard -->
+    <div class="row mb-5">
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-glow"><i class="fa-solid fa-graduation-cap"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Curriculum Progress</span>
+                    <h3 class="stat-value" id="overallProgress">0%</h3>
+                    <div class="progress progress-sm mt-2">
+                        <div class="progress-bar bg-cyan" role="progressbar" style="width: 0%" id="overallProgressBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="stat-card">
+                <div class="stat-icon bg-violet-glow"><i class="fa-solid fa-trophy"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Average Quiz Score</span>
+                    <h3 class="stat-value" id="averageScore">0%</h3>
+                    <small class="text-muted" id="completedQuizzesCount">No quizzes completed yet</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-orange-glow"><i class="fa-solid fa-terminal"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Completed Challenges</span>
+                    <h3 class="stat-value" id="completedChallenges">0 / 10</h3>
+                    <small class="text-muted">Hands-on coding tasks in Playground</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sections Title -->
+    <div class="section-title-wrapper mb-4">
+        <h2 class="Cairo-bold text-light"><i class="fa-solid fa-book-open text-cyan me-2"></i> Curriculum Sections (10 Sections)</h2>
+        <p class="text-muted font-outfit">Select a section to learn core concepts, run code in the playground, solve challenges, and take quizzes.</p>
+    </div>
+
+    <!-- Grid of Sections -->
+    <div class="row">
+        @foreach (var section in Model)
+        {
+            // Set dynamic icons based on Section ID
+            string iconClass = section.Id switch
+            {
+                1 => "fa-solid fa-shapes", // Intro
+                2 => "fa-solid fa-box-open", // Classes
+                3 => "fa-solid fa-key", // Access Modifiers
+                4 => "fa-solid fa-diagram-project", // UML
+                5 => "fa-solid fa-screwdriver-wrench", // Constructors
+                6 => "fa-solid fa-sitemap", // Inheritance
+                7 => "fa-solid fa-compass-drafting", // Point & Line
+                8 => "fa-solid fa-cube", // Abstract class
+                9 => "fa-solid fa-tags", // Generics
+                10 => "fa-solid fa-triangle-exclamation", // Exception
+                _ => "fa-solid fa-code"
+            };
+
+            // Set glowing colors for cards
+            string glowColor = (section.Id % 3) switch
+            {
+                0 => "purple-glow-card",
+                1 => "cyan-glow-card",
+                _ => "pink-glow-card"
+            };
+
+            <div class="col-lg-6 mb-4">
+                <div class="card section-card @glowColor h-100" data-section-id="@(section.Id)">
+                    <div class="card-body d-flex flex-column text-start">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="section-number-badge me-3">#@(section.Id)</div>
+                            <div class="card-icon-container">
+                                <i class="@iconClass text-cyan"></i>
+                            </div>
+                            <div class="ms-3 flex-grow-1">
+                                <span class="badge badge-completed float-end d-none" id="completedBadge-@(section.Id)">
+                                    <i class="fa-solid fa-circle-check"></i> Completed
+                                </span>
+                                <h4 class="card-title text-light Cairo-bold mb-0">@(section.TitleEn)</h4>
+                            </div>
+                        </div>
+                        
+                        <p class="card-text text-muted flex-grow-1 font-outfit">@(section.Summary)</p>
+                        
+                        <!-- Progress of individual section -->
+                        <div class="section-card-footer mt-4 pt-3 border-top border-dark-subtle d-flex justify-content-between align-items-center">
+                            <div class="small-stats">
+                                <span class="me-3 font-outfit text-white-50" id="labStatus-@(section.Id)">
+                                    <i class="fa-solid fa-flask text-muted"></i> Lab: Incomplete
+                                </span>
+                                <span class="me-3 font-outfit text-white-50" id="challengeStatus-@(section.Id)">
+                                    <i class="fa-solid fa-terminal text-muted"></i> Challenge: Unsolved
+                                </span>
+                                <span class="me-3 font-outfit text-white-50" id="dragDropStatus-@(section.Id)">
+                                    <i class="fa-solid fa-hand-pointer text-muted"></i> Matching: Incomplete
+                                </span>
+                                <span class="font-outfit text-white-50" id="quizStatus-@(section.Id)">
+                                    <i class="fa-solid fa-list-check text-muted"></i> Quiz: 0%
+                                </span>
+                            </div>
+                            <a href="/Section/@(section.Id)" class="btn btn-outline-cyan btn-sm Cairo-bold">
+                                Start Learning <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

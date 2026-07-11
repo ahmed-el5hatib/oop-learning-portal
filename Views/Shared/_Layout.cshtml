@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - C# OOP Portal</title>
+    
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Cairo:wght@300;400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Monaco Editor CDN for C# Playground -->
+    <link rel="stylesheet" data-name="vs/editor/default.placeholder" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/editor/editor.main.min.css">
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="dark-theme">
+    <div class="glow-bg"></div>
+    
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark premium-nav">
+            <div class="container">
+                <a class="navbar-brand logo-glow" asp-controller="Home" asp-action="Index">
+                    <i class="fa-solid fa-code text-cyan me-2"></i>
+                    <span>C# OOP Learning Portal</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                <i class="fa-solid fa-house me-1"></i> Dashboard (Sections)
+                            </a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link" asp-controller="Home" asp-action="LabManual" style="color: var(--neon-cyan); border: 1px solid rgba(0, 242, 254, 0.3); padding: 5px 12px; border-radius: 8px; font-weight: 600;">
+                                <i class="fa-solid fa-book-open me-1"></i> Final Lab Manual
+                            </a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <div class="presenter-toggle-btn" id="presenterModeToggle" onclick="togglePresenterMode()">
+                                <i class="fa-solid fa-chalkboard-user"></i> Presenter Mode
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="main-content-wrapper">
+        <main role="main" class="pb-5">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="premium-footer text-center">
+        <div class="container text-muted">
+            <p class="mb-1">&copy; 2026 - C# OOP Interactive Portal | Faculty of Computers & Information</p>
+            <small>Interactive portal for teaching C# Object-Oriented Programming - Prepared by Eng. Ahmed El-khatib</small>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+    
+    <!-- Canvas Confetti for Quiz Celebrations -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,583 @@
+@model OopLearningPortal.Models.Section
+@{
+    ViewData["Title"] = Model.TitleEn;
+    var allSections = (ViewBag.AllSections as IEnumerable<OopLearningPortal.Models.Section>) ?? System.Array.Empty<OopLearningPortal.Models.Section>();
+}
+
+<!-- Data elements parsed by site.js for the active section -->
+<div id="sectionData" 
+     data-id="@Model.Id" 
+     data-expected-output="@Model.ExpectedOutput" 
+     style="display:none;">
+</div>
+<textarea id="hiddenCodeTemplate" style="display:none;">@Model.InitialCode</textarea>
+<script>
+    var quizQuestions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Quiz));
+    var sectionLabs = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Labs));
+    var dragDropExercise = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DragDrop));
+    var predictOutputExercises = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PredictOutputs));
+</script>
+
+<div class="container-fluid mt-4 px-lg-5 text-start">
+    <div class="row">
+        <!-- Sidebar Navigation (LHS) -->
+        <div class="col-lg-3 mb-4">
+            <div class="sidebar-card">
+                <h5 class="Cairo-bold text-light mb-3 pb-2 border-bottom border-dark-subtle">
+                    <i class="fa-solid fa-list-ul text-cyan me-2"></i> Curriculum Sections
+                </h5>
+                <div class="list-group list-group-flush sidebar-list">
+                    @foreach (var sec in allSections)
+                    {
+                        var activeClass = sec.Id == Model.Id ? "active-sec" : "";
+                        <a href="/Section/@sec.Id" class="list-group-item list-group-item-action sidebar-item @activeClass d-flex align-items-center justify-content-between">
+                            <span class="Cairo-bold">@sec.Id. @sec.TitleEn</span>
+                            <span class="badge badge-sidebar-completed d-none" id="sidebarCheck-@(sec.Id)">
+                                <i class="fa-solid fa-circle-check text-cyan"></i>
+                            </span>
+                        </a>
+                    }
+                </div>
+                <div class="mt-4 text-center">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-dark-gradient btn-sm w-100 Cairo-bold">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Section Work Area (RHS) -->
+        <div class="col-lg-9">
+            <!-- Header Info -->
+            <div class="section-header-card mb-4 d-md-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-cyan text-dark-theme mb-2 font-outfit">SECTION @Model.Id</span>
+                    <h2 class="Cairo-bold text-light">@Model.TitleEn</h2>
+                </div>
+                <div class="text-md-end mt-3 mt-md-0">
+                    <span class="badge badge-success-glow p-2 d-none" id="sectionOverallCompletedBadge">
+                        <i class="fa-solid fa-circle-check"></i> Section Completed!
+                    </span>
+                    <div class="section-progress-text text-muted mt-2">
+                        Section Progress: <strong class="text-light" id="sectionProgressVal">0%</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation Links -->
+            <ul class="nav nav-pills premium-tabs mb-4" id="sectionTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="learn-tab" data-bs-toggle="tab" data-bs-target="#learn" type="button" role="tab">
+                        <i class="fa-solid fa-book me-1"></i> Lecture & Notes
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="simulator-tab" data-bs-toggle="tab" data-bs-target="#simulator" type="button" role="tab">
+                        <i class="fa-solid fa-gamepad me-1"></i> Visual Simulator
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="lab-tab" data-bs-toggle="tab" data-bs-target="#lab" type="button" role="tab">
+                        <i class="fa-solid fa-flask me-1"></i> Code Lab (Fix Bug)
+                    </button>
+                </li>
+                @if (Model.Id == 4 || Model.Id == 5 || Model.Id == 7 || Model.Id == 8)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="uml-tab" data-bs-toggle="tab" data-bs-target="#uml" type="button" role="tab">
+                            <i class="fa-solid fa-diagram-project me-1"></i> UML Diagram
+                        </button>
+                    </li>
+                }
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="playground-tab" data-bs-toggle="tab" data-bs-target="#playground" type="button" role="tab">
+                        <i class="fa-solid fa-terminal me-1"></i> Code Playground
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="challenge-tab" data-bs-toggle="tab" data-bs-target="#challenge" type="button" role="tab">
+                        <i class="fa-solid fa-code me-1"></i> Code Challenge
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="quiz-tab" data-bs-toggle="tab" data-bs-target="#quiz" type="button" role="tab">
+                        <i class="fa-solid fa-list-check me-1"></i> Section Quiz
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="dragdrop-tab" data-bs-toggle="tab" data-bs-target="#dragdrop" type="button" role="tab" onclick="initDragDropGame()">
+                        <i class="fa-solid fa-hand-pointer me-1"></i> Concept Matching
+                    </button>
+                </li>
+                @if (Model.PredictOutputs.Count > 0)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="predict-tab" data-bs-toggle="tab" data-bs-target="#predict" type="button" role="tab" onclick="initPredictOutput()">
+                            <i class="fa-solid fa-eye me-1"></i> Predict Output
+                        </button>
+                    </li>
+                }
+            </ul>
+
+            <!-- Tab Contents -->
+            <div class="tab-content premium-tab-content" id="sectionTabsContent">
+                <!-- 1. Learn Tab -->
+                <div class="tab-pane fade show active" id="learn" role="tabpanel">
+                    <div class="learn-container Cairo-regular">
+                        @Html.Raw(Model.LearnContentHtml)
+                        
+                        <div class="learn-actions mt-5 d-flex justify-content-between">
+                            <button class="btn btn-cyan btn-lg Cairo-bold" onclick="goToTab('playground-tab')">
+                                Try Code in Playground <i class="fa-solid fa-terminal ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Simulator Tab -->
+                <div class="tab-pane fade" id="simulator" role="tabpanel">
+                    <div class="simulator-wrapper">
+                        <div id="simulatorContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Interactive Code Lab Tab -->
+                <div class="tab-pane fade" id="lab" role="tabpanel">
+                    <div class="lab-layout">
+                        <!-- Lab Switcher Buttons -->
+                        <div class="d-flex gap-2 mb-3">
+                            @for (int idx = 0; idx < Model.Labs.Count; idx++)
+                            {
+                                var lab = Model.Labs[idx];
+                                <button class="btn btn-outline-cyan btn-sm Cairo-bold px-3 lab-switch-btn @(idx == 0 ? "active" : "")" 
+                                        id="lab-btn-@idx" 
+                                        onclick="switchLab(@idx)">
+                                    <i class="fa-solid fa-flask me-1"></i> @lab.Title
+                                </button>
+                            }
+                        </div>
+
+                        <div class="alert alert-cyan-glow mb-4">
+                            <h4 class="Cairo-bold text-cyan" id="labDisplayTitle"><i class="fa-solid fa-flask me-2"></i> Section Lab: @Model.Labs[0].Title</h4>
+                            <p class="mb-0 mt-2 font-outfit text-white" id="labDisplayDesc">@Model.Labs[0].Description</p>
+                        </div>
+                        
+                        <!-- Hidden template definitions -->
+                        <textarea id="hiddenLabCodeTemplate" style="display:none;">@Model.Labs[0].InitialCode</textarea>
+                        <input type="hidden" id="labExpectedOutput" value="@Model.Labs[0].ExpectedOutput" />
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-white-50 small Cairo-regular" id="labTaskInstructionLabel"><i class="fa-solid fa-bugs text-cyan"></i> Fix the C# code below and click Run & Test Lab:</span>
+                            <div class="lab-actions">
+                                <button class="btn btn-outline-warning btn-sm me-2 Cairo-bold" onclick="resetLabCodeTemplate()">
+                                    <i class="fa-solid fa-rotate-left"></i> Reset Template
+                                </button>
+                                <button class="btn btn-cyan btn-sm Cairo-bold px-4" id="runLabCodeBtn" onclick="runLabCode()">
+                                    <span id="runLabBtnSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+                                    <i class="fa-solid fa-play me-1" id="runLabBtnIcon"></i> Run & Test Lab
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- The Monaco Editor Target for Lab -->
+                        <div class="editor-container-wrapper" style="border: 1px solid rgba(0, 242, 254, 0.15); border-radius: 8px; overflow: hidden; background: #0c0f16;">
+                            <div id="labMonacoEditor" style="height: 380px;"></div>
+                        </div>
+
+                        <div class="terminal-wrapper mt-4">
+                            <div class="terminal-header d-flex justify-content-between align-items-center">
+                                <span class="font-outfit text-cyan"><i class="fa-solid fa-flask"></i> Lab Terminal Output</span>
+                                <span class="badge bg-dark text-cyan" id="labExecutionTime">Status: Ready</span>
+                            </div>
+                            <div class="terminal-body font-mono text-light" id="labTerminalOutput" style="background: #06090e; padding: 15px; border-radius: 0 0 8px 8px; border: 1px solid rgba(255,255,255,0.05); min-height: 120px; font-size: 0.9rem; overflow-y: auto; white-space: pre-wrap;">
+                                <span class="text-muted">&gt; Fix code errors and click Run & Test Lab to verify...</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center border-top border-secondary-subtle pt-4 mt-4">
+                            <div>
+                                <span class="badge bg-success text-dark p-2 fs-6 d-none" id="labCompletedBadge">
+                                    <i class="fa-solid fa-circle-check"></i> Lab Completed Successfully!
+                                </span>
+                                <span class="badge bg-dark text-muted p-2 fs-6" id="labPendingBadge">
+                                    <i class="fa-solid fa-flask"></i> Awaiting verification...
+                                </span>
+                            </div>
+                            <button class="btn btn-cyan btn-lg Cairo-bold px-4" id="checkLabBtn" onclick="verifyLabSolution()">
+                                <i class="fa-solid fa-clipboard-check me-1"></i> Verify Lab Fix
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. UML Tab (Conditional) -->
+                @if (Model.Id == 4 || Model.Id == 5 || Model.Id == 7 || Model.Id == 8)
+                {
+                    <div class="tab-pane fade" id="uml" role="tabpanel">
+                        <div class="text-center p-4">
+                            <h4 class="Cairo-bold text-cyan mb-4">UML Graphical Representation</h4>
+                            
+                            @if (Model.Id == 4)
+                            {
+                                <div class="uml-box">
+                                    <div class="uml-class-header font-outfit">Car</div>
+                                    <div class="uml-class-body text-start font-outfit">
+                                        <div>- make : string</div>
+                                        <div>- year : int</div>
+                                        <hr class="uml-divider"/>
+                                        <div>+ SetDetails(m: string, y: int) : void</div>
+                                        <div>+ Display() : void</div>
+                                    </div>
+                                </div>
+                                <p class="text-muted mt-3 Cairo-regular">UML class diagram representing a Car class with private attributes and public methods.</p>
+                            }
+                            else if (Model.Id == 5)
+                            {
+                                <div class="uml-box">
+                                    <div class="uml-class-header font-outfit">ClockType</div>
+                                    <div class="uml-class-body text-start font-outfit">
+                                        <div>- hours : int</div>
+                                        <div>- minutes : int</div>
+                                        <div>- seconds : int</div>
+                                        <hr class="uml-divider"/>
+                                        <div>+ ClockType() <i>&lt;&lt;default constructor&gt;&gt;</i></div>
+                                        <div>+ ClockType(h: int, m: int, s: int) <i>&lt;&lt;parameterized constructor&gt;&gt;</i></div>
+                                        <div>+ Hours : int <i>&lt;&lt;property&gt;&gt;</i></div>
+                                        <div>+ Minutes : int <i>&lt;&lt;property&gt;&gt;</i></div>
+                                        <div>+ Seconds : int <i>&lt;&lt;property&gt;&gt;</i></div>
+                                        <div>+ PrintTime() : void</div>
+                                    </div>
+                                </div>
+                                <p class="text-muted mt-3 Cairo-regular">UML diagram representing a Clock class with default/parameterized constructors and encapsulated properties.</p>
+                            }
+                            else if (Model.Id == 7)
+                            {
+                                <div class="d-flex flex-column align-items-center">
+                                    <div class="uml-box mb-3">
+                                        <div class="uml-class-header font-outfit">Point</div>
+                                        <div class="uml-class-body text-start font-outfit">
+                                            <div>+ X : int</div>
+                                            <div>+ Y : int</div>
+                                            <hr class="uml-divider"/>
+                                            <div>+ Point(x: int, y: int)</div>
+                                            <div>+ Display() : void &lt;&lt;virtual&gt;&gt;</div>
+                                        </div>
+                                    </div>
+                                    <div class="inheritance-arrow"><i class="fa-solid fa-arrow-up text-cyan fs-4"></i></div>
+                                    <div class="uml-box mt-3">
+                                        <div class="uml-class-header font-outfit">Line : Point</div>
+                                        <div class="uml-class-body text-start font-outfit">
+                                            <div>+ EndX : int</div>
+                                            <div>+ EndY : int</div>
+                                            <hr class="uml-divider"/>
+                                            <div>+ Line(startX: int, startY: int, endX: int, endY: int)</div>
+                                            <div>+ Length() : double</div>
+                                            <div>+ Display() : void &lt;&lt;override&gt;&gt;</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-muted mt-3 Cairo-regular">UML inheritance diagram showing Line class extending Point class, inheriting coordinates, and overriding Display.</p>
+                            }
+                            else if (Model.Id == 8)
+                            {
+                                <div class="d-flex flex-column align-items-center">
+                                    <div class="uml-box mb-3 italic-header">
+                                        <div class="uml-class-header font-outfit"><i>&lt;&lt;Abstract&gt;&gt;</i><br/>Employee</div>
+                                        <div class="uml-class-body text-start font-outfit">
+                                            <div>+ Name : string</div>
+                                            <div>+ Id : int</div>
+                                            <hr class="uml-divider"/>
+                                            <div>+ Employee(name: string, id: int)</div>
+                                            <div><i>+ CalculateSalary() : double &lt;&lt;abstract&gt;&gt;</i></div>
+                                            <div>+ DisplayInfo() : void</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-around w-100 mt-2">
+                                        <div>
+                                            <div class="inheritance-arrow"><i class="fa-solid fa-arrow-up text-cyan fs-4"></i></div>
+                                            <div class="uml-box mt-2">
+                                                <div class="uml-class-header font-outfit">FullTimeEmployee</div>
+                                                <div class="uml-class-body text-start font-outfit">
+                                                    <div>+ MonthlySalary : double</div>
+                                                    <hr class="uml-divider"/>
+                                                    <div>+ CalculateSalary() : double</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="inheritance-arrow"><i class="fa-solid fa-arrow-up text-cyan fs-4"></i></div>
+                                            <div class="uml-box mt-2">
+                                                <div class="uml-class-header font-outfit">PartTimeEmployee</div>
+                                                <div class="uml-class-body text-start font-outfit">
+                                                    <div>+ HourlyRate : double</div>
+                                                    <div>+ HoursWorked : int</div>
+                                                    <hr class="uml-divider"/>
+                                                    <div>+ CalculateSalary() : double</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-muted mt-3 Cairo-regular">UML abstract diagram demonstrating Employee as an abstract base class, and derived concrete classes implementing CalculateSalary.</p>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- 3. Playground Tab -->
+                <div class="tab-pane fade" id="playground" role="tabpanel">
+                    <div class="playground-layout">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted small Cairo-regular"><i class="fa-solid fa-keyboard text-cyan"></i> Write your complete C# code below and click Run Code:</span>
+                            <div class="code-actions">
+                                <button class="btn btn-outline-warning btn-sm me-2 Cairo-bold" onclick="resetCodeTemplate()">
+                                    <i class="fa-solid fa-rotate-left"></i> Reset Template
+                                </button>
+                                <button class="btn btn-cyan btn-sm Cairo-bold px-4" id="runCodeBtn" onclick="runPlaygroundCode()">
+                                    <span id="runBtnSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+                                    <i class="fa-solid fa-play me-1" id="runBtnIcon"></i> Run Code
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- The Monaco Editor Target -->
+                        <div class="editor-container-wrapper">
+                            <div id="monacoEditor" class="monaco-target"></div>
+                        </div>
+
+                        <!-- Terminal Output Window -->
+                        <div class="terminal-wrapper mt-4">
+                            <div class="terminal-header d-flex justify-content-between align-items-center">
+                                <span class="font-outfit text-cyan"><i class="fa-solid fa-square-poll-horizontal"></i> Terminal Output</span>
+                                <span class="badge bg-dark text-cyan" id="executionTime">Status: Ready</span>
+                            </div>
+                            <div class="terminal-body font-mono" id="terminalOutput">
+                                <span class="text-muted">&gt; Code outputs will show up here after running...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Challenge Tab -->
+                <div class="tab-pane fade" id="challenge" role="tabpanel">
+                    <div class="challenge-container Cairo-regular text-start">
+                        <div class="alert alert-cyan-glow mb-4">
+                            <h4 class="Cairo-bold text-cyan"><i class="fa-solid fa-flag me-2"></i> Section Challenge: @Model.ChallengeTitle</h4>
+                            <p class="mb-0 mt-2 font-outfit">@Model.ChallengeDescription</p>
+                        </div>
+
+                        <div class="bg-dark-card p-4 rounded mb-4 font-outfit">
+                            <h5 class="Cairo-bold text-light mb-3"><i class="fa-solid fa-circle-info text-cyan me-1"></i> Challenge Instructions:</h5>
+                            <ul>
+                                <li>Navigate to the <strong>"Code Playground"</strong> tab and write the C# code necessary to fulfill the goal.</li>
+                                <li>Ensure your program prints the output specified in the challenge.</li>
+                                <li>After verifying the program output using "Run Code", navigate back here and click <strong>"Check Solution"</strong> to validate.</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center border-top border-dark-subtle pt-4">
+                            <div>
+                                <span class="badge badge-success-glow p-2 fs-6 d-none" id="challengeCompletedBadge">
+                                    <i class="fa-solid fa-award"></i> Challenge Solved Successfully!
+                                </span>
+                                <span class="badge bg-dark text-muted p-2 fs-6" id="challengePendingBadge">
+                                    <i class="fa-solid fa-circle-notch fa-spin"></i> Awaiting code validation...
+                                </span>
+                            </div>
+                            <button class="btn btn-cyan btn-lg Cairo-bold px-4" id="checkSolutionBtn" onclick="verifyChallengeSolution()">
+                                <i class="fa-solid fa-clipboard-check me-1"></i> Check Solution
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Quiz Tab -->
+                <div class="tab-pane fade" id="quiz" role="tabpanel">
+                    <div class="quiz-container Cairo-regular text-start">
+                        <div id="quizIntro">
+                            <h4 class="Cairo-bold text-light mb-3">Quick Quiz to Test Understanding</h4>
+                            <p class="text-muted">Questions are designed directly from the course lectures. A perfect score (100%) will award you the section badge and update your progress.</p>
+                            <button class="btn btn-cyan Cairo-bold px-5 py-2 mt-3" onclick="startQuiz()">
+                                Start Quiz <i class="fa-solid fa-play ms-1"></i>
+                            </button>
+                        </div>
+
+                        <!-- Quiz Layout -->
+                        <div id="quizPlayground" class="d-none">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <span class="badge bg-cyan text-dark-theme font-outfit" id="quizProgressText">QUESTION 1 OF 3</span>
+                                <span class="badge bg-dark text-cyan font-outfit" id="quizTimerText">00:00</span>
+                            </div>
+                            
+                            <h4 class="Cairo-bold text-light mb-4" id="questionText">Is the class instantiable?</h4>
+                            
+                            <div class="options-container text-start" id="optionsContainer">
+                                <!-- Generated by JS -->
+                            </div>
+
+                            <div class="quiz-explanation alert alert-info-glow mt-4 d-none" id="quizExplanation">
+                                <h5 class="Cairo-bold text-cyan"><i class="fa-solid fa-circle-question me-1"></i> Explanation:</h5>
+                                <p class="mb-0 font-outfit" id="explanationText">Explanation goes here.</p>
+                            </div>
+
+                            <div class="d-flex justify-content-end mt-4">
+                                <button class="btn btn-cyan Cairo-bold d-none" id="nextQuestionBtn" onclick="nextQuizQuestion()">
+                                    Next Question <i class="fa-solid fa-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quiz Result -->
+                        <div id="quizResult" class="text-center p-5 d-none">
+                            <div class="result-score-circle mb-4">
+                                <span class="score-num" id="quizFinalScore">3/3</span>
+                            </div>
+                            <h3 class="Cairo-bold text-light" id="quizResultMessage">Perfect Score! 🎉</h3>
+                            <p class="text-muted mt-2" id="quizResultSub">You got all questions correct.</p>
+                            
+                            <div class="d-flex justify-content-center gap-3 mt-4">
+                                <button class="btn btn-outline-warning Cairo-bold" onclick="resetQuiz()">
+                                    Retake Quiz <i class="fa-solid fa-rotate-left ms-1"></i>
+                                </button>
+                                <button class="btn btn-cyan Cairo-bold" onclick="goToTab('learn-tab')">
+                                    Review Lesson <i class="fa-solid fa-book ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Drag and Drop Concept Matching Tab -->
+                <div class="tab-pane fade" id="dragdrop" role="tabpanel">
+                    <div class="dragdrop-container text-start">
+                        <div class="alert alert-cyan-glow mb-4">
+                            <h4 class="Cairo-bold text-cyan"><i class="fa-solid fa-hand-pointer me-2"></i> Concept Matching Challenge: @Model.DragDrop.ExerciseTitle</h4>
+                            <p class="mb-0 mt-2 font-outfit text-light">Drag each core C# OOP concept card from the left side and drop it into its corresponding description target slot on the right side.</p>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Left: Draggable Items -->
+                            <div class="col-md-4">
+                                <h5 class="Cairo-bold text-light mb-3"><i class="fa-solid fa-grip-vertical text-cyan me-1"></i> Concepts</h5>
+                                <div class="d-flex flex-column gap-3" id="dragSourceContainer">
+                                    <!-- Populated via Javascript -->
+                                </div>
+                            </div>
+
+                            <!-- Right: Drop Targets -->
+                            <div class="col-md-8">
+                                <h5 class="Cairo-bold text-light mb-3"><i class="fa-solid fa-bullseye text-cyan me-1"></i> Definitions</h5>
+                                <div class="d-flex flex-column gap-3" id="dropTargetContainer">
+                                    <!-- Populated via Javascript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center border-top border-secondary-subtle pt-4 mt-5">
+                            <div>
+                                <span class="badge bg-success text-dark p-2 fs-6 d-none" id="dragDropCompletedBadge">
+                                    <i class="fa-solid fa-circle-check"></i> Concept Matching Completed!
+                                </span>
+                                <span class="badge bg-dark text-muted p-2 fs-6" id="dragDropPendingBadge">
+                                    <i class="fa-solid fa-circle-notch fa-spin"></i> Awaiting matching completion...
+                                </span>
+                            </div>
+                            <button class="btn btn-outline-warning btn-lg Cairo-bold px-4" id="resetDragDropBtn" onclick="resetDragDropGame()">
+                                <i class="fa-solid fa-rotate-left me-1"></i> Reset Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. Predict the Output Tab -->
+                @if (Model.PredictOutputs.Count > 0)
+                {
+                    <div class="tab-pane fade" id="predict" role="tabpanel">
+                        <div class="predict-container text-start">
+
+                            <!-- Header -->
+                            <div class="alert alert-cyan-glow mb-4">
+                                <h4 class="Cairo-bold text-cyan">
+                                    <i class="fa-solid fa-eye me-2"></i> Predict the Output
+                                </h4>
+                                <p class="mb-0 mt-2 font-outfit text-light">Read the C# code carefully and type what you think will be printed to the console. Test your mental model before running!</p>
+                            </div>
+
+                            <!-- Exercise Switcher -->
+                            <div class="d-flex gap-2 flex-wrap mb-4" id="predictSwitcherBar">
+                                <!-- Populated by JS -->
+                            </div>
+
+                            <!-- Exercise Card -->
+                            <div id="predictExerciseCard">
+                                <!-- Exercise number badge + title -->
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <span class="badge bg-cyan text-dark-theme font-outfit fs-6 px-3 py-2" id="predictExerciseNum">Exercise 1</span>
+                                    <h5 class="Cairo-bold text-light mb-0" id="predictExerciseTitle">Loading...</h5>
+                                </div>
+
+                                <!-- Code display -->
+                                <div style="border-radius:10px; overflow:hidden; border: 1px solid rgba(0,242,254,0.2); margin-bottom:1.5rem;">
+                                    <div style="background:#141824; padding:8px 16px; display:flex; justify-content:space-between; align-items:center;">
+                                        <span class="font-outfit text-cyan" style="font-size:0.8rem;"><i class="fa-solid fa-code me-1"></i> C# Code</span>
+                                        <span class="badge bg-dark text-muted font-outfit" style="font-size:0.7rem;">READ ONLY — No running allowed!</span>
+                                    </div>
+                                    <pre id="predictCodeDisplay" style="background:#0c0f16; margin:0; padding:20px; font-size:0.9rem; overflow-x:auto; color:#e2e8f0; line-height:1.6;"><code class="language-csharp"></code></pre>
+                                </div>
+
+                                <!-- Hint reveal -->
+                                <div class="mb-3">
+                                    <button class="btn btn-outline-warning btn-sm Cairo-bold" id="predictHintBtn" onclick="revealPredictHint()">
+                                        <i class="fa-solid fa-lightbulb me-1"></i> Show Hint
+                                    </button>
+                                    <div id="predictHintBox" class="alert mt-2 d-none" style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.3); color:#fbbf24;">
+                                        <i class="fa-solid fa-lightbulb me-1"></i> <span id="predictHintText"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Answer area -->
+                                <div class="mb-4">
+                                    <label class="Cairo-bold text-light mb-2 d-block">
+                                        <i class="fa-solid fa-terminal text-cyan me-1"></i> Your predicted output:
+                                    </label>
+                                    <textarea id="predictAnswerInput"
+                                              class="form-control font-mono"
+                                              rows="4"
+                                              placeholder="Type exactly what you think will be printed..."
+                                              style="background:#0c0f16; color:#e2e8f0; border:1px solid rgba(0,242,254,0.25); border-radius:8px; font-size:0.9rem; resize:vertical;"
+                                    ></textarea>
+                                </div>
+
+                                <!-- Check button -->
+                                <div class="d-flex gap-3 align-items-center mb-4">
+                                    <button class="btn btn-cyan Cairo-bold px-5" onclick="checkPredictAnswer()">
+                                        <i class="fa-solid fa-check-circle me-1"></i> Check My Prediction
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm Cairo-bold" onclick="resetPredictExercise()">
+                                        <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                                    </button>
+                                </div>
+
+                                <!-- Feedback panel -->
+                                <div id="predictFeedback" class="d-none">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="border-top border-secondary-subtle pt-4 mt-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted font-outfit" style="font-size:0.85rem;">Exercises completed</span>
+                                    <span class="text-cyan Cairo-bold" id="predictScoreText">0 / @Model.PredictOutputs.Count</span>
+                                </div>
+                                <div class="progress" style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px;">
+                                    <div class="progress-bar" id="predictProgressBar" role="progressbar" style="width:0%; background: linear-gradient(90deg, #00f2fe, #4facfe); border-radius:3px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
