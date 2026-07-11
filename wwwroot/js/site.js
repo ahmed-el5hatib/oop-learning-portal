@@ -538,8 +538,8 @@ function updateDashboardStats() {
         if (quizDone && quizScoreVal !== null) {
             totalXp += Math.round(parseInt(quizScoreVal)); // Up to 100 XP
         }
-        // Predict output exercises (20 XP each, up to 3 exercises per section)
-        for (let pIdx = 0; pIdx < 3; pIdx++) {
+        // Predict output exercises (20 XP each, up to 10 exercises per section)
+        for (let pIdx = 0; pIdx < 10; pIdx++) {
             if (localStorage.getItem(`section_${i}_predict_${pIdx}_done`) === "true") {
                 totalXp += 20;
             }

@@ -285,6 +285,42 @@ class Program {
     }
 }",
                             ExpectedOutput = "int: 7\r\ndouble: 7"
+                        },
+                        new PredictOutputExercise
+                        {
+                            Id = 4,
+                            Title = "Optional Parameters default values",
+                            Hint = "Optional parameters assume default values if omitted from the method call arguments.",
+                            Code = @"using System;
+class Program {
+    static void Display(int a, int b = 5) {
+        Console.WriteLine(a + b);
+    }
+    static void Main() {
+        Display(10);
+        Display(10, 20);
+    }
+}",
+                            ExpectedOutput = "15\r\n30"
+                        },
+                        new PredictOutputExercise
+                        {
+                            Id = 5,
+                            Title = "Combining Ref & Optional Parameters",
+                            Hint = "Track changes to the variable passed by ref. Increment is called twice on the same variable.",
+                            Code = @"using System;
+class Program {
+    static void Increment(ref int x, int step = 1) {
+        x += step;
+    }
+    static void Main() {
+        int num = 10;
+        Increment(ref num);
+        Increment(ref num, 5);
+        Console.WriteLine(num);
+    }
+}",
+                            ExpectedOutput = "16"
                         }
                     ],
                     BugHunter = new SpotBugExercise
@@ -336,14 +372,15 @@ class Program {
                 new Section
                 {
                     Id = 2,
-                    TitleEn = "Arrays, Structs & Enums",
-                    TitleAr = "Arrays, Structs & Enums",
-                    Summary = "Understand contiguous memory arrays, struct value types, and enum state representations in C#.",
+                    TitleEn = "Arrays, Strings, Structs & Enums",
+                    TitleAr = "Arrays, Strings, Structs & Enums",
+                    Summary = "Understand contiguous memory arrays, immutable char strings, struct value types, and enum state representations in C#.",
                     LearnContentHtml = @"
 <h3 class='text-cyan Cairo-bold'>1. C# Arrays</h3>
 <p>An <strong>Array</strong> is a group of contiguous memory locations that share a common name and are used to store multiple values of the same datatype. Arrays in C# have a fixed size defined at creation time.</p>
 
 <h4 class='text-cyan font-outfit'>1.1 Declaring & Initializing Arrays</h4>
+<p>In C#, you declare an array by specifying the type of elements followed by square brackets <code>[]</code>:</p>
 <pre><code class='language-csharp'>// Declaring an array with a fixed size of 5
 int[] numbers = new int[5];
 
@@ -357,7 +394,25 @@ int[] grades = { 90, 85, 92, 78, 88 };</code></pre>
     Console.WriteLine(grades[i]);
 }</code></pre>
 
-<h3 class='text-cyan Cairo-bold'>2. C# Structures (Structs)</h3>
+<h3 class='text-cyan Cairo-bold'>2. C# Strings</h3>
+<p>A <strong>String</strong> in C# is a sequence of Unicode characters. Under the hood, strings behave like a read-only array of <code>char</code>, but they are reference types allocated on the Heap.</p>
+
+<h4 class='text-cyan font-outfit'>2.1 Immutability of Strings</h4>
+<p>Strings are <strong>immutable</strong>: once created, they cannot be modified in memory. Modifying a string (e.g. concatenating or replacing) actually allocates a brand new string instance on the heap, updating the variable reference pointer.</p>
+<pre><code class='language-csharp'>string message = ""Hello"";
+message += "" World""; // Allocates a new string containing ""Hello World""</code></pre>
+
+<h4 class='text-cyan font-outfit'>2.2 Common String Operations</h4>
+<ul>
+    <li><code>Length</code>: Property returning the character count (e.g., <code>message.Length</code>).</li>
+    <li><code>Substring(startIndex, length)</code>: Extracts a portion of the string.</li>
+    <li><code>Replace(oldVal, newVal)</code>: Replaces occurrences of a substring.</li>
+    <li><code>Split(delimiter)</code>: Splits the string into a string array.</li>
+</ul>
+<pre><code class='language-csharp'>string data = ""Apple,Banana,Orange"";
+string[] fruits = data.Split(','); // returns { ""Apple"", ""Banana"", ""Orange"" }</code></pre>
+
+<h3 class='text-cyan Cairo-bold'>3. C# Structures (Structs)</h3>
 <p>In C#, a <strong>struct</strong> is a value type data type. It groups related data of various datatypes under a single variable slot. Unlike classes, structs are allocated directly on the Stack (unless embedded inside a class object on the Heap).</p>
 
 <h4 class='text-cyan font-outfit'>2.1 Key Features of Structs</h4>
@@ -536,6 +591,40 @@ class Program {
     }
 }",
                             ExpectedOutput = "Autumn\r\n2"
+                        },
+                        new PredictOutputExercise
+                        {
+                            Id = 4,
+                            Title = "String Immutability Semantic Check",
+                            Hint = "Strings are immutable. Modifying s1 changes its reference, but s2 still points to the original string.",
+                            Code = @"using System;
+class Program {
+    static void Main() {
+        string s1 = ""Hello"";
+        string s2 = s1;
+        s1 += "" World"";
+        Console.WriteLine(s1);
+        Console.WriteLine(s2);
+    }
+}",
+                            ExpectedOutput = "Hello World\r\nHello"
+                        },
+                        new PredictOutputExercise
+                        {
+                            Id = 5,
+                            Title = "String Manipulations: Substring & Replace",
+                            Hint = "Substring(start, length) extracts characters. Replace(old, new) swaps all occurrences of target characters.",
+                            Code = @"using System;
+class Program {
+    static void Main() {
+        string raw = ""OOP-2026"";
+        string code = raw.Substring(0, 3);
+        string year = raw.Substring(4, 4);
+        Console.WriteLine(code);
+        Console.WriteLine(year.Replace(""2"", ""9""));
+    }
+}",
+                            ExpectedOutput = "OOP\r\n9096"
                         }
                     ],
                     CodePuzzle = new CodePuzzleExercise
