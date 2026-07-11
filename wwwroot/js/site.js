@@ -435,14 +435,33 @@ function updateSectionProgress() {
         );
     }
 
+    // Check bug hunter completion
+    const hasBugHunter = window.bugHunterExercise != null;
+    const bugHunterDone = localStorage.getItem(`section_${activeSectionId}_bughunter_completed`) === "true";
+
     // Weighted scoring: distributes to 100
-    if (hasPredicts) {
+    if (hasPredicts && hasBugHunter) {
+        // Lab=15, Challenge=25, Quiz=20, DragDrop=15, Predict=15, BugHunter=10
+        if (labDone) progress += 15;
+        if (challengeDone) progress += 25;
+        if (quizDone) progress += Math.round((quizScoreVal / 100) * 20);
+        if (dragDropDone) progress += 15;
+        if (allPredictsDone) progress += 15;
+        if (bugHunterDone) progress += 10;
+    } else if (hasPredicts && !hasBugHunter) {
         // Lab=20, Challenge=25, Quiz=25, DragDrop=15, Predict=15
         if (labDone) progress += 20;
         if (challengeDone) progress += 25;
         if (quizDone) progress += Math.round((quizScoreVal / 100) * 25);
         if (dragDropDone) progress += 15;
         if (allPredictsDone) progress += 15;
+    } else if (!hasPredicts && hasBugHunter) {
+        // Lab=20, Challenge=25, Quiz=25, DragDrop=20, BugHunter=10
+        if (labDone) progress += 20;
+        if (challengeDone) progress += 25;
+        if (quizDone) progress += Math.round((quizScoreVal / 100) * 25);
+        if (dragDropDone) progress += 20;
+        if (bugHunterDone) progress += 10;
     } else {
         // Original weights: Lab=25, Challenge=30, Quiz=25, DragDrop=20
         if (labDone) progress += 25;
@@ -508,6 +527,10 @@ function updateDashboardStats() {
             if (localStorage.getItem(`section_${i}_predict_${pIdx}_done`) === "true") {
                 totalXp += 20;
             }
+        }
+        // Bug Hunter exercise (+50 XP if completed)
+        if (localStorage.getItem(`section_${i}_bughunter_completed`) === "true") {
+            totalXp += 50;
         }
 
         // Sidebar Checkmarks (if on section detail page)
@@ -2398,4 +2421,122 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
 }
+
+// ==========================================
+// Bug Hunter Clickable Code Lines Handler
+// ==========================================
+function initBugHunter() {
+    if (!activeSectionId || !window.bugHunterExercise) return;
+
+    const isCompleted = localStorage.getItem(`section_${activeSectionId}_bughunter_completed`) === "true";
+    const statusText = document.getElementById("bugHunterStatusText");
+    const completedBadge = document.getElementById("bugHunterCompletedBadge");
+    const feedback = document.getElementById("bugHunterFeedback");
+
+    // Reset lines styling
+    const totalLines = window.bugHunterExercise.codeLines.length;
+    for (let i = 0; i < totalLines; i++) {
+        const lineRow = document.getElementById(`bugLine-${i}`);
+        if (lineRow) {
+            lineRow.classList.remove("correct", "wrong");
+        }
+    }
+
+    if (isCompleted) {
+        if (statusText) statusText.innerHTML = '<span class="text-success font-outfit"><i class="fa-solid fa-circle-check"></i> Resolved</span>';
+        if (completedBadge) completedBadge.classList.remove("d-none");
+        
+        // Mark correct line
+        const correctLine = document.getElementById(`bugLine-${window.bugHunterExercise.buggyLineIndex}`);
+        if (correctLine) {
+            correctLine.classList.add("correct");
+        }
+
+        // Show explanation
+        if (feedback) {
+            feedback.className = "alert p-4 mb-4 alert-success";
+            feedback.style.background = "rgba(16, 185, 129, 0.1)";
+            feedback.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+            document.getElementById("bugHunterFeedbackTitle").innerHTML = '<i class="fa-solid fa-medal text-success me-2"></i> Bug Uncovered! +50 XP';
+            document.getElementById("bugHunterFeedbackTitle").style.color = "#10b981";
+            document.getElementById("bugHunterFeedbackText").innerHTML = `<strong>Success!</strong> ${window.bugHunterExercise.explanation}`;
+            document.getElementById("bugHunterFeedbackText").style.color = "#e2e8f0";
+            feedback.classList.remove("d-none");
+        }
+    } else {
+        if (statusText) statusText.textContent = "Active Hunting";
+        if (completedBadge) completedBadge.classList.add("d-none");
+        if (feedback) {
+            feedback.classList.add("d-none");
+            feedback.innerHTML = '<h5 class="Cairo-bold mb-2" id="bugHunterFeedbackTitle">Result</h5><p class="mb-0 font-outfit" id="bugHunterFeedbackText"></p>';
+        }
+    }
+}
+
+function clickBugLine(lineIdx) {
+    if (!activeSectionId || !window.bugHunterExercise) return;
+
+    const isCompleted = localStorage.getItem(`section_${activeSectionId}_bughunter_completed`) === "true";
+    if (isCompleted) return; // Already resolved, do nothing
+
+    const buggyIdx = window.bugHunterExercise.buggyLineIndex;
+    const lineRow = document.getElementById(`bugLine-${lineIdx}`);
+    const feedback = document.getElementById("bugHunterFeedback");
+    const statusText = document.getElementById("bugHunterStatusText");
+    const completedBadge = document.getElementById("bugHunterCompletedBadge");
+
+    if (lineIdx === buggyIdx) {
+        // Correct Bug Line Clicked!
+        lineRow.classList.remove("wrong");
+        lineRow.classList.add("correct");
+
+        localStorage.setItem(`section_${activeSectionId}_bughunter_completed`, "true");
+        if (statusText) statusText.innerHTML = '<span class="text-success font-outfit"><i class="fa-solid fa-circle-check"></i> Resolved</span>';
+        if (completedBadge) completedBadge.classList.remove("d-none");
+
+        // Show Success Feedback
+        if (feedback) {
+            feedback.className = "alert p-4 mb-4 alert-success";
+            feedback.style.background = "rgba(16, 185, 129, 0.1)";
+            feedback.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+            document.getElementById("bugHunterFeedbackTitle").innerHTML = '<i class="fa-solid fa-medal text-success me-2"></i> Bug Uncovered! +50 XP';
+            document.getElementById("bugHunterFeedbackTitle").style.color = "#10b981";
+            document.getElementById("bugHunterFeedbackText").innerHTML = `<strong>Success!</strong> ${window.bugHunterExercise.explanation}`;
+            document.getElementById("bugHunterFeedbackText").style.color = "#e2e8f0";
+            feedback.classList.remove("d-none");
+        }
+
+        // Update progress & stats in real-time
+        updateSectionProgress();
+        updateDashboardStats();
+    } else {
+        // Incorrect Line Clicked!
+        // Reset previous failures and trigger shake animation
+        lineRow.classList.remove("wrong");
+        void lineRow.offsetWidth; // Trigger reflow for animation restart
+        lineRow.classList.add("wrong");
+
+        // Show Failure Feedback
+        if (feedback) {
+            feedback.className = "alert p-4 mb-4 alert-danger";
+            feedback.style.background = "rgba(239, 68, 68, 0.08)";
+            feedback.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+            document.getElementById("bugHunterFeedbackTitle").innerHTML = '<i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> Try Again';
+            document.getElementById("bugHunterFeedbackTitle").style.color = "#ef4444";
+            document.getElementById("bugHunterFeedbackText").textContent = "This line of code is compiled correctly. Review your OOP rules and try another line!";
+            document.getElementById("bugHunterFeedbackText").style.color = "#fca5a5";
+            feedback.classList.remove("d-none");
+        }
+    }
+}
+
+function resetBugHunter() {
+    if (!activeSectionId) return;
+
+    localStorage.removeItem(`section_${activeSectionId}_bughunter_completed`);
+    initBugHunter();
+    updateSectionProgress();
+    updateDashboardStats();
+}
+
 

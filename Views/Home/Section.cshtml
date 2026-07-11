@@ -16,6 +16,7 @@
     var sectionLabs = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Labs));
     var dragDropExercise = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DragDrop));
     var predictOutputExercises = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PredictOutputs));
+    var bugHunterExercise = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BugHunter));
 </script>
 
 <div class="container-fluid mt-4 px-lg-5 text-start">
@@ -114,6 +115,14 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="predict-tab" data-bs-toggle="tab" data-bs-target="#predict" type="button" role="tab" onclick="initPredictOutput()">
                             <i class="fa-solid fa-eye me-1"></i> Predict Output
+                        </button>
+                    </li>
+                }
+                @if (Model.BugHunter != null)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="bughunter-tab" data-bs-toggle="tab" data-bs-target="#bughunter" type="button" role="tab" onclick="initBugHunter()">
+                            <i class="fa-solid fa-bug me-1"></i> Bug Hunter
                         </button>
                     </li>
                 }
@@ -573,6 +582,60 @@
                                 <div class="progress" style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px;">
                                     <div class="progress-bar" id="predictProgressBar" role="progressbar" style="width:0%; background: linear-gradient(90deg, #00f2fe, #4facfe); border-radius:3px;"></div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- 8. Bug Hunter Tab -->
+                @if (Model.BugHunter != null)
+                {
+                    <div class="tab-pane fade" id="bughunter" role="tabpanel">
+                        <div class="bughunter-container text-start">
+                            
+                            <!-- Header -->
+                            <div class="alert alert-cyan-glow mb-4">
+                                <h4 class="Cairo-bold text-cyan">
+                                    <i class="fa-solid fa-bug me-2"></i> Bug Hunter: @Model.BugHunter.Title
+                                </h4>
+                                <p class="mb-0 mt-2 font-outfit text-light">@Model.BugHunter.Description</p>
+                            </div>
+
+                            <!-- Clickable Code Lines -->
+                            <div class="bughunter-code-wrapper" style="border-radius:10px; overflow:hidden; border:1px solid rgba(0,242,254,0.25); margin-bottom:1.5rem; background:#0c0f16;">
+                                <div style="background:#141824; padding:8px 16px; border-bottom:1px solid rgba(0,242,254,0.15); display:flex; justify-content:space-between; align-items:center;">
+                                    <span class="font-outfit text-cyan" style="font-size:0.8rem;"><i class="fa-solid fa-code me-1"></i> Click the BUGGY line of code!</span>
+                                    <span class="badge bg-dark text-muted font-outfit" id="bugHunterStatusText" style="font-size:0.7rem;">Active Hunting</span>
+                                </div>
+                                <div class="p-3 font-mono" style="line-height:1.8; font-size:0.92rem; overflow-x:auto;">
+                                    @for (int i = 0; i < Model.BugHunter.CodeLines.Count; i++)
+                                    {
+                                        var lineText = Model.BugHunter.CodeLines[i];
+                                        int leadingSpacesCount = lineText.TakeWhile(c => c == ' ').Count();
+                                        var indentStyle = $"padding-left: {15 + leadingSpacesCount * 8}px;";
+                                        
+                                        <div class="code-line-row py-1 d-flex align-items-start" id="bugLine-@i" onclick="clickBugLine(@i)" style="cursor: pointer; transition: all 0.2s ease;">
+                                            <span class="code-line-num text-muted border-end border-secondary-subtle text-end pe-2 me-2 font-outfit" style="width:30px; user-select:none; font-size:0.8rem;">@(i + 1)</span>
+                                            <span class="code-line-text text-light text-wrap" style="@indentStyle">@lineText</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Explanation Feedback Card -->
+                            <div id="bugHunterFeedback" class="d-none alert p-4 mb-4" style="border-radius:12px; transition: all 0.3s ease;">
+                                <h5 class="Cairo-bold mb-2" id="bugHunterFeedbackTitle">Result</h5>
+                                <p class="mb-0 font-outfit" id="bugHunterFeedbackText"></p>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="d-flex justify-content-between align-items-center border-top border-secondary-subtle pt-4 mt-4">
+                                <span class="badge bg-success text-dark p-2 fs-6 d-none" id="bugHunterCompletedBadge">
+                                    <i class="fa-solid fa-medal"></i> Bug Uncovered! +50 XP
+                                </span>
+                                <button class="btn btn-outline-warning Cairo-bold px-4" onclick="resetBugHunter()">
+                                    <i class="fa-solid fa-rotate-left me-1"></i> Reset Hunter
+                                </button>
                             </div>
                         </div>
                     </div>

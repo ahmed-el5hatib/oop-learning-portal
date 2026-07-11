@@ -1848,3 +1848,35 @@ body.dark-theme .text-muted {
         margin-bottom: 1.5rem;
     }
 }
+
+/* ==========================================
+   Bug Hunter Clickable Code Lines
+   ========================================== */
+.code-line-row {
+    background: transparent;
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+}
+
+.code-line-row:hover {
+    background: rgba(0, 242, 254, 0.05);
+}
+
+.code-line-row.wrong {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-left: 3px solid #ef4444 !important;
+    animation: shakeEffect 0.4s ease-in-out;
+}
+
+.code-line-row.correct {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-left: 3px solid #10b981 !important;
+}
+
+.code-line-row.wrong .code-line-text {
+    color: #fca5a5 !important;
+}
+
+.code-line-row.correct .code-line-text {
+    color: #a7f3d0 !important;
+}

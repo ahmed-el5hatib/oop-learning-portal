@@ -18,6 +18,7 @@ namespace OopLearningPortal.Models
         public List<CodeLab> Labs { get; set; } = [];
         public DragDropExercise DragDrop { get; set; } = new();
         public List<PredictOutputExercise> PredictOutputs { get; set; } = [];
+        public SpotBugExercise? BugHunter { get; set; }
     }
 
     public class CodeLab
@@ -39,6 +40,18 @@ namespace OopLearningPortal.Models
         public string Hint { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
         public string ExpectedOutput { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// A "Spot the Bug" exercise: student clicks the buggy line of code.
+    /// </summary>
+    public class SpotBugExercise
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public List<string> CodeLines { get; set; } = [];
+        public int BuggyLineIndex { get; set; } // 0-based index of the buggy line
+        public string Explanation { get; set; } = string.Empty;
     }
 
     public class DragDropExercise
@@ -259,7 +272,27 @@ class Program {
 }",
                             ExpectedOutput = "int: 7\r\ndouble: 7"
                         }
-                    ]
+                    ],
+                    BugHunter = new SpotBugExercise
+                    {
+                        Title = "Invalid Use of out Parameter",
+                        Description = "Locate the line that causes a C# compiler error. Remember the rule: an 'out' parameter must be initialized/assigned a value inside the method before you can read from it or before the method exits.",
+                        CodeLines = [
+                            "using System;",
+                            "class Program {",
+                            "    static void Triple(out int x) {",
+                            "        x = x * 3; // Trying to multiply the unassigned value",
+                            "    }",
+                            "    static void Main() {",
+                            "        int n = 5;",
+                            "        Triple(out n);",
+                            "        Console.WriteLine(n);",
+                            "    }",
+                            "}"
+                        ],
+                        BuggyLineIndex = 3,
+                        Explanation = "Line 4 contains the error: 'x = x * 3;'. In C#, an 'out' parameter is considered unassigned upon method entry. Therefore, you cannot read its value (e.g., using it in 'x * 3' on the right-hand side) before assigning it a value first. You must write e.g., 'x = 3;' first, then you can read from it."
+                    }
                 },
 
                 // =====================================================
@@ -715,7 +748,28 @@ class Program {
 }",
                             ExpectedOutput = "5\r\n0"
                         }
-                    ]
+                    ],
+                    BugHunter = new SpotBugExercise
+                    {
+                        Title = "Encapsulation Violation",
+                        Description = "Find the line that violates encapsulation principles and causes a compilation error in C#.",
+                        CodeLines = [
+                            "using System;",
+                            "class Student {",
+                            "    private string name = \"Zara\";",
+                            "    public string GetName() => name;",
+                            "}",
+                            "class Program {",
+                            "    static void Main() {",
+                            "        Student s = new Student();",
+                            "        s.name = \"Ahmed\"; // Assigning name",
+                            "        Console.WriteLine(s.GetName());",
+                            "    }",
+                            "}"
+                        ],
+                        BuggyLineIndex = 8,
+                        Explanation = "Line 9 contains the error: 's.name = \"Ahmed\";'. The field 'name' in class 'Student' is marked as 'private', meaning it can only be accessed or modified from inside the 'Student' class. Accessing it directly from 'Program.Main' is a compilation error."
+                    }
                 },
 
                 // =====================================================
@@ -1166,7 +1220,35 @@ class Program {
 }",
                             ExpectedOutput = "Count: 3"
                         }
-                    ]
+                    ],
+                    BugHunter = new SpotBugExercise
+                    {
+                        Title = "Recursive Property Stack Overflow",
+                        Description = "Identify the line in this class property that will trigger a StackOverflowException at runtime. Remember: a property getter or setter must access the backing field (lowercase), not the property itself (PascalCase).",
+                        CodeLines = [
+                            "using System;",
+                            "class Person {",
+                            "    private string name = \"\";",
+                            "    public string Name {",
+                            "        get {",
+                            "            return Name; // Fetching the name",
+                            "        }",
+                            "        set {",
+                            "            name = value;",
+                            "        }",
+                            "    }",
+                            "}",
+                            "class Program {",
+                            "    static void Main() {",
+                            "        Person p = new Person();",
+                            "        p.Name = \"John\";",
+                            "        Console.WriteLine(p.Name);",
+                            "    }",
+                            "}"
+                        ],
+                        BuggyLineIndex = 5,
+                        Explanation = "Line 6 contains the bug: 'return Name;'. In C#, returning 'Name' (with a capital N) inside the 'Name' property getter will call the getter method again, leading to an infinite recursion that crashes the application with a StackOverflowException. It must be written as 'return name;' (using the lowercase private backing field)."
+                    }
                 },
 
                 // =====================================================
@@ -1558,7 +1640,31 @@ class Program {
 }",
                             ExpectedOutput = "ID: 202, Rate: 15"
                         }
-                    ]
+                    ],
+                    BugHunter = new SpotBugExercise
+                    {
+                        Title = "Invalid Override Attempt",
+                        Description = "Locate the line that causes a C# compiler error. Hint: You cannot override a base method unless it is explicitly marked as virtual, abstract, or override.",
+                        CodeLines = [
+                            "using System;",
+                            "class Employee {",
+                            "    public void Print() => Console.WriteLine(\"Employee\");",
+                            "}",
+                            "class PartTimeEmployee : Employee {",
+                            "    public override void Print() {",
+                            "        Console.WriteLine(\"Part-Time Employee\");",
+                            "    }",
+                            "}",
+                            "class Program {",
+                            "    static void Main() {",
+                            "        Employee emp = new PartTimeEmployee();",
+                            "        emp.Print();",
+                            "    }",
+                            "}"
+                        ],
+                        BuggyLineIndex = 5,
+                        Explanation = "Line 6 contains the error: 'public override void Print()'. You cannot override the 'Print' method because it is not marked as 'virtual' or 'abstract' in the base class 'Employee'. To fix this, you must add 'virtual' to the base method declaration: 'public virtual void Print()'."
+                    }
                 },
 
                 // =====================================================
