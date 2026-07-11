@@ -470,6 +470,7 @@ function updateDashboardStats() {
     let challengeCompletedCount = 0;
     let quizSum = 0;
     let quizCount = 0;
+    let totalXp = 0;
 
     for (let i = 1; i <= totalSections; i++) {
         // A section's labs are fully complete if both lab 1 and lab 2 are solved
@@ -488,6 +489,25 @@ function updateDashboardStats() {
         if (quizDone && quizScoreVal !== null) {
             quizSum += parseInt(quizScoreVal);
             quizCount++;
+        }
+
+        // Calculate XP for this section
+        if (lab1Done) totalXp += 50;
+        if (lab2Done) totalXp += 50;
+        // fallback for older sections with only one lab representation
+        if (!lab1Done && !lab2Done && localStorage.getItem(`section_${i}_lab_completed`) === "true") {
+            totalXp += 100;
+        }
+        if (challengeDone) totalXp += 100;
+        if (dragDropDone) totalXp += 50;
+        if (quizDone && quizScoreVal !== null) {
+            totalXp += Math.round(parseInt(quizScoreVal)); // Up to 100 XP
+        }
+        // Predict output exercises (20 XP each, up to 3 exercises per section)
+        for (let pIdx = 0; pIdx < 3; pIdx++) {
+            if (localStorage.getItem(`section_${i}_predict_${pIdx}_done`) === "true") {
+                totalXp += 20;
+            }
         }
 
         // Sidebar Checkmarks (if on section detail page)
@@ -545,11 +565,70 @@ function updateDashboardStats() {
                 quizStatus.innerHTML = '<i class="fa-solid fa-list-check text-muted"></i> Quiz: 0%';
             }
         }
+
+        // Section Mastery Badge Showcase (Index page)
+        const badgeCircle = document.getElementById(`badgeIconCircle-${i}`);
+        const badgeContainer = document.getElementById(`badgeContainer-${i}`);
+        if (badgeCircle && badgeContainer) {
+            if (fullyCompleted) {
+                badgeCircle.classList.remove("locked");
+                badgeCircle.classList.add("unlocked");
+                badgeContainer.setAttribute("title", `Mastered! Section ${i} Badge Unlocked!`);
+            } else {
+                badgeCircle.classList.remove("unlocked");
+                badgeCircle.classList.add("locked");
+            }
+        }
     }
 
     // Calculators
     const overallProgressPct = Math.round((completedCount / totalSections) * 100);
     const avgScore = quizCount > 0 ? Math.round(quizSum / quizCount) : 0;
+
+    // Calculate Level & Rank based on total XP
+    let level = 1;
+    let rank = "Novice Coder";
+    let minXp = 0;
+    let maxXp = 300;
+
+    if (totalXp >= 300 && totalXp < 800) {
+        level = 2;
+        rank = "Stack Explorer";
+        minXp = 300;
+        maxXp = 800;
+    } else if (totalXp >= 800 && totalXp < 1600) {
+        level = 3;
+        rank = "Class Constructor";
+        minXp = 800;
+        maxXp = 1600;
+    } else if (totalXp >= 1600 && totalXp < 2600) {
+        level = 4;
+        rank = "Polymorphic Architect";
+        minXp = 1600;
+        maxXp = 2600;
+    } else if (totalXp >= 2600) {
+        level = 5;
+        rank = "C# OOP Grandmaster";
+        minXp = 2600;
+        maxXp = 4000; // Cap
+    }
+
+    const currentLevelXp = totalXp - minXp;
+    const levelRange = maxXp - minXp;
+    const xpPercent = Math.min(100, Math.round((currentLevelXp / levelRange) * 100));
+
+    // Update Gamification UI Elements (Index page)
+    const studentLevelEl = document.getElementById("studentLevel");
+    const studentRankNameEl = document.getElementById("studentRankName");
+    const xpTextEl = document.getElementById("xpText");
+    const xpPercentTextEl = document.getElementById("xpPercentText");
+    const xpProgressBarEl = document.getElementById("xpProgressBar");
+
+    if (studentLevelEl) studentLevelEl.innerText = level;
+    if (studentRankNameEl) studentRankNameEl.innerText = rank;
+    if (xpTextEl) xpTextEl.innerText = `${totalXp} / ${maxXp} XP`;
+    if (xpPercentTextEl) xpPercentTextEl.innerText = `${xpPercent}%`;
+    if (xpProgressBarEl) xpProgressBarEl.style.width = `${xpPercent}%`;
 
     // Update UI Stats Elements
     const overallProgressEl = document.getElementById("overallProgress");
@@ -569,6 +648,7 @@ function updateDashboardStats() {
     // Update section progress detail text if currently on a section page
     updateSectionProgress();
 }
+
 
 // ==========================================
 // Interactive Visual Simulators Engine

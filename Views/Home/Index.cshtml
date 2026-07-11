@@ -27,6 +27,78 @@
                     <div class="cube-face bottom">API</div>
                 </div>
             </div>
+    </div>
+
+    <!-- Gamification Dashboard (XP & Badges Showcase) -->
+    <div class="gamification-card mb-5">
+        <div class="row align-items-center">
+            <!-- Level & XP Status -->
+            <div class="col-lg-4 mb-4 mb-lg-0 border-end border-dark-subtle">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="level-badge-container">
+                        <div class="level-circle">
+                            <span class="level-number" id="studentLevel">1</span>
+                        </div>
+                    </div>
+                    <div class="w-100">
+                        <span class="badge bg-warning text-dark font-outfit mb-1" id="studentRankName">Novice Coder</span>
+                        <h4 class="Cairo-bold text-light mb-1">Total Experience (XP)</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted font-outfit small" id="xpText">0 / 300 XP</span>
+                            <span class="text-cyan small font-outfit" id="xpPercentText">0%</span>
+                        </div>
+                        <div class="progress progress-sm" style="background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px;">
+                            <div class="progress-bar" id="xpProgressBar" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #fbbf24, #f59e0b); border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Badges Showcase -->
+            <div class="col-lg-8">
+                <h5 class="Cairo-bold text-light mb-3 px-md-3">
+                    <i class="fa-solid fa-medal text-warning me-2"></i> Section Mastery Badges
+                </h5>
+                <div class="d-flex justify-content-around flex-wrap gap-2 px-md-3">
+                    @for (int i = 1; i <= 10; i++)
+                    {
+                        var sectionName = i switch
+                        {
+                            1 => "Methods",
+                            2 => "Arrays",
+                            3 => "Classes",
+                            4 => "UML",
+                            5 => "Properties",
+                            6 => "Inheritance",
+                            7 => "Polymorphism",
+                            8 => "Abstraction",
+                            9 => "Generics",
+                            10 => "Practical",
+                            _ => ""
+                        };
+                        var badgeIcon = i switch
+                        {
+                            1 => "fa-shapes",
+                            2 => "fa-box-open",
+                            3 => "fa-key",
+                            4 => "fa-diagram-project",
+                            5 => "fa-screwdriver-wrench",
+                            6 => "fa-sitemap",
+                            7 => "fa-people-group",
+                            8 => "fa-cube",
+                            9 => "fa-tags",
+                            10 => "fa-flask",
+                            _ => ""
+                        };
+                        <div class="badge-item-wrapper text-center" id="badgeContainer-@i" data-bs-toggle="tooltip" title="Complete Section @i: @sectionName to unlock!">
+                            <div class="badge-item-circle locked" id="badgeIconCircle-@i">
+                                <i class="fa-solid @badgeIcon"></i>
+                            </div>
+                            <span class="badge-item-label font-outfit">S-@i</span>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 
