@@ -1842,7 +1842,7 @@ body.dark-theme .text-muted {
 
 @media (max-width: 991.98px) {
     .gamification-card .border-end {
-        border-end: none !important;
+        border-right: none !important;
         border-bottom: 1px solid rgba(255,255,255,0.08);
         padding-bottom: 1.5rem;
         margin-bottom: 1.5rem;
