@@ -1608,3 +1608,141 @@ body.dark-theme .text-muted {
     20%, 60% { transform: translateX(-6px); }
     40%, 80% { transform: translateX(6px); }
 }
+
+/* ==========================================
+   Mobile Responsiveness & Media Queries
+   ========================================== */
+
+@media (max-width: 991.98px) {
+    /* Hero Section adjustments */
+    .hero-card {
+        padding: 1.5rem !important;
+    }
+    
+    .floating-cube {
+        width: 60px !important;
+        height: 60px !important;
+        margin: 20px auto !important;
+    }
+    
+    .cube-face {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 0.65rem !important;
+    }
+    
+    /* Stats grid stacking */
+    .stat-card {
+        padding: 1rem !important;
+        gap: 0.8rem !important;
+    }
+    
+    /* Sidebar list order reversed */
+    .sidebar-card {
+        margin-top: 2rem;
+    }
+
+    /* Premium Navigation Tabs scrollable horizontally on mobile */
+    .premium-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 12px !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    
+    .premium-tabs::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .premium-tabs::-webkit-scrollbar-thumb {
+        background: var(--neon-cyan);
+        border-radius: 2px;
+    }
+    
+    .premium-tabs .nav-item {
+        flex: 0 0 auto;
+    }
+    
+    .premium-tab-content {
+        padding: 1.2rem !important;
+        min-height: auto !important;
+    }
+    
+    /* Code lab button layouts */
+    .lab-layout .d-flex {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 767.98px) {
+    /* Fonts scale down slightly for compact devices */
+    h1.display-5 {
+        font-size: 1.8rem !important;
+    }
+    
+    h2 {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Drag and Drop Matching game responsiveness */
+    .drop-zone-wrapper {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        text-align: center;
+        gap: 10px !important;
+    }
+    
+    .drop-zone {
+        width: 100% !important;
+        height: 44px !important;
+    }
+    
+    .draggable-card {
+        padding: 10px 14px !important;
+        font-size: 0.9rem !important;
+        text-align: center;
+    }
+    
+    /* Section progress header */
+    .section-header-card {
+        padding: 1.2rem !important;
+        text-align: center;
+    }
+    
+    .section-header-card .text-md-end {
+        text-align: center !important;
+        margin-top: 15px !important;
+    }
+    
+    /* Visual simulator wrappers scroll horizontally on overflow */
+    .simulator-wrapper {
+        overflow-x: auto !important;
+        width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Monaco editor heights */
+    #monacoEditor, #labMonacoEditor {
+        height: 320px !important;
+    }
+    
+    /* Table wrappers */
+    .comparison-table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .hero-visual {
+        display: none !important; /* Hide cube on extremely small devices to save space */
+    }
+    
+    .instructor-badge {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.82rem !important;
+    }
+}
